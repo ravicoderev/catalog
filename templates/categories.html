@@ -1,0 +1,58 @@
+
+<html>
+	<head>
+		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+	</head>
+	<h1> Sporting Goods Category List </h1>
+	<hr>
+	
+		<body>
+	
+	
+			<a href = '{{url_for('newCategory', category_id=categories.category_id) }}'>Create New Category</a>
+	
+	
+			<div class = 'flash'>
+				{% with messages = get_flashed_messages() %}
+					{% if messages %}
+	
+						<ul>
+						{% for message in messages %}
+							<li> <strong> {{ message }} </strong> </li>
+						{% endfor %}
+						</ul>
+					{% endif %}
+				{% endwith %}
+	
+			</div>
+	
+	
+			{% for c in categories %}
+				<div class = 'name'>
+					
+					<p>
+						{{c.category_id}}
+						{{c.category_name}}
+						
+						<div class = "editdeletepane">
+
+							<a href='{{url_for('editCategory',category_id=c.category_id)}}' >Edit Category</a>
+							<a href='{{url_for('deleteCategory',category_id=c.category_id)}}' >Delete Category</a>
+						</div>
+					</p>
+	
+	
+	
+				</div>
+	
+	
+			{% endfor %}
+	
+	
+			</div>
+		</body>
+	
+	</html>
+	
+	
+	
