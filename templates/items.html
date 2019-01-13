@@ -1,0 +1,75 @@
+
+<html>
+	<head>
+		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+	</head>
+	<h1> Sporting Goods Item List </h1>
+	<hr>
+	
+		<body>
+	
+	
+			
+	
+	
+			<div class = 'flash'>
+				{% with messages = get_flashed_messages() %}
+					{% if messages %}
+	
+						<ul>
+						{% for message in messages %}
+							<li> <strong> {{ message }} </strong> </li>
+						{% endfor %}
+						</ul>
+					{% endif %}
+				{% endwith %}
+	
+			</div>
+	
+	
+			{% for i in items %}
+				<div class = 'name'>
+					<table>
+						<tr>
+							<th align = "right">Item ID:	</th>	
+							<td> {{i. item_id}} </td>		
+						</tr>
+
+						<tr>
+								<th align = "right">Item Name:	</th>	
+								<td> {{i.item_name}} </td>		
+						</tr>
+
+						<tr>
+								<th align = "right">Item Description:	</th>	
+								<td> {{i.item_description}} </td>		
+						</tr>
+
+						<tr>
+								<th align = "right">Category ID:	</th>	
+								<td> {{i.category_id}} </td>		
+						</tr>
+
+						<tr>
+								<th align = "right">User:	</th>	
+								<td> {{i.user_id}} </td>		
+						</tr>
+
+					</table>
+					
+	
+	
+	
+				</div>
+	
+	
+			{% endfor %}
+	
+	
+			</div>
+		</body>
+	
+	</html>
+	
+	
+	
