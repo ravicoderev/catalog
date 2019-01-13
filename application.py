@@ -102,16 +102,16 @@ def addNewItemForCategory(category_id):
 # @app.route('/items/edit')
 @app.route('/category/<int:category_id>/items/<int:item_id>/edit', methods=['GET', 'POST'])
 def editItemInCategory(category_id, item_id):
-#     # editItemQuery = session.query(Item).filter_by(item_id=item_id).one()
-    
-#     # if request.method == 'POST':
-#     #     if request.form['name']:
-#     #         editItemQuery.item_name = request.form['name']
-#     #         flash('Edit Successful: %s' % editItemQuery.category_name)
-#     #         return redirect(url_for('showCategories'))
-#     # else:
-#     #     return render_template('editcategory.html', category=editQuery)
-    return("Edit item in a Category: WIP")
+    editItem = session.query(Item).filter_by(item_id=item_id).one()
+    category = session.query(Category).filter_by(category_id=category_id).one()
+    if request.method == 'POST':
+        if request.form['name']:
+            editItem.item_name = request.form['name']
+            flash('Edit Successful: %s' % editItem.item_name)
+            return redirect(url_for('showCategories'))
+    else:
+        return render_template('edititem.html', item=editItem, category=category)
+    # return("Edit item in a Category: WIP")
 
 
 # Edit item in a Category
