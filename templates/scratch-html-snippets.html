@@ -21,5 +21,32 @@
 							<a href='{{url_for('editItemInCategory',category_id=category.category_id, item_id=i.item_id)}}' >Edit Item</a>
 							
 						</div>
-					</p>
+                    </p>
+                    
+
+                    <tr>
+							<th align = "right">Item ID:	</th>	
+							<td> {{i. item_id}} </td>		
+						</tr>
+
+						<tr>
+								<th align = "right">Item Name:	</th>	
+								<td> {{i.item_name}} </td>		
+						</tr>
+
+						<tr>
+								<th align = "right">Item Description:	</th>	
+								<td> {{i.item_description}} </td>		
+						</tr>
+
+						<tr>
+								<th align = "right">Category ID:	</th>	
+								<td> {{i.category_id}} </td>		
+						</tr>
+
+						<tr>
+								<th align = "right">User:	</th>	
+								<td> {{i.user_id}} </td>		
+						</tr>
+						<br>
 	

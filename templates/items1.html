@@ -1,7 +1,7 @@
 
 <html>
 	<head>
-		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
 	</head>
     <h1> Items in Category </h1>
     <h2> Category: {{category.category_name}}</h2>
@@ -28,7 +28,7 @@
 			</div>
 	
 	
-			{% for i in items %}
+			
 				<div class = 'name'>
                     
                     <table>
@@ -41,6 +41,8 @@
                             <th> User ID </th>
                             <th colspan="2"> Options </th>
                         </tr>
+                        
+                        {% for i in items %}
                         <tr>
                             <td> {{i.item_id}} </td>
                             <td> {{i.item_name}} </td>
@@ -50,12 +52,14 @@
                             <td> <a href='{{url_for('editItemInCategory',category_id=category.category_id, item_id=i.item_id)}}' >Edit Item</a> </td>
                             <td> <a href='{{url_for('deleteItemInCategory',category_id=category.category_id, item_id=i.item_id)}}' >Delete Item</a> </td>
                         </tr>
+                        {% endfor %}
+                        
                     </table>
 	
 				</div>
 	
 	
-			{% endfor %}
+			
 	
 	
 			</div>

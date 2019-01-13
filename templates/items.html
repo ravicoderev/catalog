@@ -25,48 +25,35 @@
 				{% endwith %}
 	
 			</div>
-	
-	
-			{% for i in items %}
-				<div class = 'name'>
-					<table>
-						<tr>
-							<th align = "right">Item ID:	</th>	
-							<td> {{i. item_id}} </td>		
-						</tr>
+			<div class = 'name'>
+                    
+                    <table>
 
-						<tr>
-								<th align = "right">Item Name:	</th>	
-								<td> {{i.item_name}} </td>		
-						</tr>
-
-						<tr>
-								<th align = "right">Item Description:	</th>	
-								<td> {{i.item_description}} </td>		
-						</tr>
-
-						<tr>
-								<th align = "right">Category ID:	</th>	
-								<td> {{i.category_id}} </td>		
-						</tr>
-
-						<tr>
-								<th align = "right">User:	</th>	
-								<td> {{i.user_id}} </td>		
-						</tr>
-						<br>
-
-					</table>
-					
-	
-	
+                        <tr>
+                            <th> Item ID </th>
+                            <th> Item Name </th>
+                            <th> Item Description </th>
+                            <th> Category ID </th>
+                            <th> User ID </th>
+                            <th colspan="2"> Options </th>
+                        </tr>
+                        
+                        {% for i in items %}
+                        <tr>
+                            <td> {{i.item_id}} </td>
+                            <td> {{i.item_name}} </td>
+                            <td> {{i.item_description}} </td>
+                            <td> {{i.category_id}} </td>
+                            <td> {{i.user_id}} </td>
+                            
+                        </tr>
+                        {% endfor %}
+                        
+                    </table>
 	
 				</div>
 	
-	
-			{% endfor %}
-	
-	
+			
 			</div>
 		</body>
 	

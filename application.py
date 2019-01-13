@@ -114,20 +114,20 @@ def editItemInCategory(category_id, item_id):
     # return("Edit item in a Category: WIP")
 
 
-# Edit item in a Category
-# @app.route('/items/edit')
+# Delete item in a Category
+
 @app.route('/category/<int:category_id>/items/<int:item_id>/delete', methods=['GET', 'POST'])
 def deleteItemInCategory(category_id, item_id):
-#     # editItemQuery = session.query(Item).filter_by(item_id=item_id).one()
-    
-#     # if request.method == 'POST':
-#     #     if request.form['name']:
-#     #         editItemQuery.item_name = request.form['name']
-#     #         flash('Edit Successful: %s' % editItemQuery.category_name)
-#     #         return redirect(url_for('showCategories'))
-#     # else:
-#     #     return render_template('editcategory.html', category=editQuery)
-    return("Delete item in a Category: WIP")
+    deleteItem = session.query(Item).filter_by(item_id=item_id).one()
+    category = session.query(Category).filter_by(category_id=category_id).one()
+    if request.method == 'POST':
+        session.delete(deleteItem)
+        session.commit()
+        flash('Delete Successful: %s' % deleteItem.item_name)
+        return redirect(url_for('showCategoryItems', category_id=category.category_id))
+    else:
+        return render_template('deleteitem.html', item=deleteItem, category=category)
+    # return("Delete item in a Category: WIP")
 
 
 # Add new item for a Category
