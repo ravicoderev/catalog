@@ -1,12 +1,23 @@
-from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
+#! Python 3.7
+
+
+#  Flask modules from flask library
+from flask import Flask, render_template, request, redirect, jsonify, url_for, flash, make_response
+from flask import session as login_session
+
+# SQL Alchemy modules
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from databasesetup import Base, Category, Item, User
-# from flask import session as login_session
-import random
-import string
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.exc import MultipleResultsFound
+
+# Authentication modules for google OAuth
+from oauth2client.client import flow_from_clientsecrets, FlowExchangeError
+
+import random, string
+
+
 
 app = Flask(__name__)
 
@@ -16,6 +27,24 @@ Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
+
+# **** OAuth ****
+# START OAuth
+# Create anti-forgery state token
+@app.route('/login')
+def showLogin():
+    state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                    for x in range(32))
+    login_session['state'] = state
+    return "The current session state is %s" % login_session['state']
+
+
+
+#  END OAuth ****
+
+
+# **** START CATEGORY ****
 
 
 # Show all categories
@@ -66,6 +95,10 @@ def deleteCategory(category_id):
         return redirect(url_for('showCategories'))
     else:
         return render_template('deletecategory.html', category=deleteQuery)
+
+# **** END CATEGORY ****
+
+# **** START ITEMS ****
 
 # Show all items
 @app.route('/items/')
@@ -130,20 +163,9 @@ def deleteItemInCategory(category_id, item_id):
     # return("Delete item in a Category: WIP")
 
 
-# Add new item for a Category
-# @app.route('/items/new/', methods=['GET', 'POST'])
-# def addItem():
-#     if request.method == 'POST':
-#         newItem = Item(item_name=request.form['name'])
-#         newItem = Item(item_description=request.form['description'])
-#         newItem = Item(category_id=request.form['category_id'])
-#         newItem = Item(user_id=request.form['user_id'])
-#         session.add(newItem)
-#         flash('SUCCESS: New Item %s Successfully Created' % newItem.item_name)
-#         session.commit()
-#         return redirect(url_for('showAllItems'))
-#     else:
-#         return render_template('newitem.html')
+# **** END ITEMS ****
+
+
 
 if __name__ == '__main__':
     app.secret_key = 'super_secret_key'
