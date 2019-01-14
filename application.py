@@ -130,6 +130,54 @@ def gconnect():
     return output
 
 # ----------------- gconnect() end
+# ----------------- gdisconnect() start
+
+# DISCONNECT - Revoke a current user's token and reset their login_session
+
+
+@app.route('/gdisconnect')
+def gdisconnect():
+    
+    try:
+        # access_token = login_session['credentials']
+        access_token = login_session.get('access_token')
+    except KeyError:
+        flash('Failed to get access token')
+        return redirect(url_for('showCategories'))
+    # print("User's name was {}.".format(login_session['name']))
+    if access_token is None:
+        print('Access Token is None')
+        response = make_response(json.dumps('Current user not connected.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    print('In gdisconnect access token is %s', access_token)
+    print('User name is: ')
+    print(login_session['username'])
+     # Check that the access token is valid. Converted to python 3 using requests instead of httplib2
+    url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={}'.format(access_token))
+    token_url = requests.get(url=url)
+    result = json.loads(token_url.text)
+    print('result is ')
+    print(result)
+    if result is None:
+        response = make_response(json.dumps('Failed to revoke token for given user.'), 400)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    else:
+        del login_session['access_token']
+        del login_session['g_id']
+        del login_session['username']
+        del login_session['email']
+        del login_session['picture']
+        response = make_response(json.dumps('Successfully disconnected.'), 200)
+        response.headers['Content-Type'] = 'application/json'
+        print('gdisconnect - ok')
+        flash('Google Sign Out - Successfull!!')
+        # return redirect(url_for('showCategories'))
+        return response
+
+    
+# ------------------ gdisconnect() end
 
 
 #  END OAuth ****
