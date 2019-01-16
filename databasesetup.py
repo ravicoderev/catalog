@@ -32,7 +32,7 @@ class Category(Base):
     # JSON Responses : Serialize function to be able to send JSON objects in a serializable format
     @property
     def serialize(self):
-        """ Retrurn object in serializable format """
+        """ Return object in serializable format """
         return{
             'category_id': self.category_id,
             'category_name': self.category_name

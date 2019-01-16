@@ -1,16 +1,12 @@
 
 <html>
 	<head>
-		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
 	</head>
-	<h1> Sporting Goods Category List </h1>
+	<h1> ZZ Sporting Goods </h1>
 	<hr>
 	
 		<body>
-	
-	
-			<a href = '{{url_for('newCategory', category_id=categories.category_id) }}'>Create New Category</a>
-	
 	
 			<div class = 'flash'>
 				{% with messages = get_flashed_messages() %}
@@ -27,28 +23,74 @@
 			</div>
 	
 	
-			{% for c in categories %}
+			
 				<div class = 'name'>
-					
-					<p>
-						{{c.category_id}}
-						{{c.category_name}}
-						
-						<div class = "editdeletepane">
+						<div class = 'categories'>
+								<header>
+										<h2 class="font-weight-light">Categories</h2>
+								</header>
 
-							<a href='{{url_for('editCategory',category_id=c.category_id)}}' >Edit Category</a>
-							<a href='{{url_for('deleteCategory',category_id=c.category_id)}}' >Delete Category</a>
+							<table>
+
+									<tr>
+										<th> Category ID </th>
+										<th> Category Name </th>
+										<th colspan="3"> Category Options </th>
+									</tr>
+
+									{% for c in categories %}
+
+									<tr>
+										<td> {{c.category_id}} </td>
+										<td> {{c.category_name}} </td>
+										<td> <a href='{{url_for('editCategory',category_id=c.category_id)}}' >Edit </a></td>
+										<td> <a href='{{url_for('deleteCategory',category_id=c.category_id)}}' >Delete </a></td>
+										<td> <a href='{{url_for('showCategoryItems',category_id=c.category_id)}}' >View Items </a></td>
+									</tr>
+									{% endfor %}
+
+
+							</table>
+							<br>
 						</div>
-					</p>
-	
-	
+
+						<div class = 'new-category'>
+								<a href = '{{url_for('newCategory', category_id=categories.category_id) }}'>Add New Category</a>
+						</div>
+					
+						<br><br>
+						<div class = 'recent-items'>
+								<header>
+										<h2 class="font-weight-light">Recent Items</h2>
+								</header>
+							<table>
+		
+										<tr>
+											<th> Item ID </th>
+											<th> Item Name </th>
+											<th> Item Description </th>
+											<th> Category ID </th>
+											<th> User ID </th>
+											
+											
+										</tr>
+										
+										{% for i in recentItemsAdded %}
+										<tr>
+											<td> {{i.item_id}} </td>
+											<td> {{i.item_name}} </td>
+											<td> {{i.item_description}} </td>
+											<td> {{i.category_id}} </td>
+											<td> {{i.user_id}} </td>
+											
+										</tr>
+										{% endfor %}
+							</table>
+		
+						</div>    
 	
 				</div>
-	
-	
-			{% endfor %}
-	
-	
+			
 			</div>
 		</body>
 	

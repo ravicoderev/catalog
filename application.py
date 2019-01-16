@@ -127,6 +127,7 @@ def gconnect():
     output += b' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
     flash("you are now logged in as %s" % login_session['username'])
     print("done!")
+    print(login_session)
     return output
 
 # ----------------- gconnect() end
@@ -182,16 +183,45 @@ def gdisconnect():
 
 #  END OAuth ****
 
+# Check login status
+def loginStatus():
+    
+    print(login_session.get('access_token'), login_session.get('email') )
+    if 'access_token' in login_session:
+        login_status = True
+    else:
+        login_status = False
+    return login_status
+
+# Home Page without Login - Show all Categories and Recent 10 Items Added
+@app.route('/')
+@app.route('/home/', methods=['GET', 'POST'])
+def home():
+    categories = (session.query(Category).order_by(Category.category_name).all())
+    recentItemsAdded = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
+    login_status = loginStatus()
+    if login_status is True:
+        print("-------- OK   -----------")
+        return render_template('categories.html', categories=categories, recentItemsAdded=recentItemsAdded)
+    else:
+        print("-------- NOT OK   -----------")
+        return render_template('home.html', categories=categories, recentItemsAdded=recentItemsAdded)
+    
+    # if request.method == 'POST':
+    #     return redirect(url_for('login'))
+    
+
 
 # **** START CATEGORY ****
 
 
 # Show all categories
-@app.route('/')
+# @app.route('/')
 @app.route('/category/')
 def showCategories():
-    categories = session.query(Category).order_by(asc(Category.category_name))
-    return render_template('categories.html', categories=categories)
+    categories = (session.query(Category).order_by(Category.category_name).all())
+    recentItemsAdded = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
+    return render_template('categories.html', categories=categories,recentItemsAdded=recentItemsAdded)
 
 # Create a new category
 @app.route('/category/new/', methods=['GET', 'POST'])
