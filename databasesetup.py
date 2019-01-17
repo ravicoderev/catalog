@@ -28,6 +28,8 @@ class Category(Base):
 
     category_id = Column(Integer, primary_key=True)
     category_name = Column(String(250), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.user_id'))
+    user = relationship(User)
 
     # JSON Responses : Serialize function to be able to send JSON objects in a serializable format
     @property
@@ -59,7 +61,7 @@ class Item(Base):
         }
 
 
-engine = create_engine('sqlite:///catalog.db', connect_args={'check_same_thread':False})
+engine = create_engine('sqlite:///catalogitems.db', connect_args={'check_same_thread':False})
 
 
 Base.metadata.create_all(engine)
