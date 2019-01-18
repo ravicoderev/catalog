@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from databasesetup import Base, Category, Item, User
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.exc import MultipleResultsFound
+from sqlalchemy.ext.declarative import declarative_base
 
 # Authentication modules for google OAuth
 from oauth2client.client import flow_from_clientsecrets, FlowExchangeError
@@ -18,7 +19,24 @@ from oauth2client.client import flow_from_clientsecrets, FlowExchangeError
 import random, string, json, requests
 import httplib2
 
+# sqlite PRAGMA listeners
+# from sqlalchemy.interfaces import PoolListener
+# class MyListener(PoolListener):
+#     def connect(self, dbapi_con, con_record):
+#         dbapi_con.execute('pragma journal_mode=OFF')
+#         dbapi_con.execute('PRAGMA synchronous=OFF')
+#         dbapi_con.execute('PRAGMA cache_size=100000')
 
+# from sqlite3 import Connection as SQLite3Connection
+# from sqlalchemy import event
+# from sqlalchemy.engine import Engine
+
+# @event.listens_for(Engine, "connect")
+# def _set_sqlite_pragma(dbapi_connection, connection_record):
+#     if isinstance(dbapi_connection, SQLite3Connection):
+#         cursor = dbapi_connection.cursor()
+#         cursor.execute("PRAGMA foreign_keys=ON;")
+#         cursor.close()
 
 app = Flask(__name__)
 
@@ -27,11 +45,17 @@ CLIENT_ID = json.loads(
 APPLICATION_NAME = "Sporting Goods Catalog App"
 
 # Connect to Database and create database session
-engine = create_engine('sqlite:///catalog.db', connect_args={'check_same_thread':False})
-Base.metadata.bind = engine
-
+# engine = create_engine('sqlite:///catalog.db', connect_args={'check_same_thread':False})
+Base = declarative_base()
+engine = create_engine('sqlite:///catalogitems.db', connect_args={'check_same_thread':False}) # , echo=True) # , listeners= [MyListener()])
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+Base.metadata.create_all(engine)
+
+# session.execute('pragma foreign_keys=on')
+# session.execute('pragma journal_mode=OFF')
+# session.execute('PRAGMA synchronous=OFF')
+
 
 
 # **** OAuth ****
@@ -118,6 +142,20 @@ def gconnect():
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
 
+    # Check for existing/new user
+    user_id = getUserID(login_session['email'])
+    # user = session.query(User).filter_by(user_email=login_session['email']).one()
+    print("Get User ID is: ", user_id)
+    if not user_id:
+        print("Create New User ID")
+        new_user_id = createUser(login_session)
+        print(new_user_id)
+        login_session['user_id'] = new_user_id
+        print("New User ID :", login_session['user_id'])
+    else:
+        login_session['user_id'] = user_id
+        print("Existing User ID :", login_session['user_id'])
+
     output = b''
     output += b'<h1>Welcome, '
     output += bytes(login_session['username'], encoding="utf-8")
@@ -130,7 +168,44 @@ def gconnect():
     print(login_session)
     return output
 
+
+    
+
 # ----------------- gconnect() end
+
+# User Details START
+# Create new user
+def createUser(login_session):
+    newUser = User(user_name = login_session['username'], user_email=login_session['email'], user_picture=login_session['picture'])
+    session.add(newUser)
+    session.commit()
+    user = session.query(User).filter_by(user_email=login_session['email']).one()
+    return user.user_id
+    # try:
+    #     session.commit()
+    #     user = session.query(User).filter_by(user_email=login_session['email']).one()
+    #     return user.user_id
+    # except:I
+    #     print("Exception occurred in createUser() method")
+    #     session.rollback()
+    #     return None
+
+def getUserInfo(user_id):
+    user = session.query(User).filter_by(user_id=user_id).one()
+    return user
+
+def getUserID(email):
+    try:
+        user = session.query(User).filter_by(user_email=email).one()
+        return user.user_id
+    except:
+        return None
+
+
+
+
+# User Details END
+
 # ----------------- gdisconnect() start
 
 # DISCONNECT - Revoke a current user's token and reset their login_session
@@ -207,8 +282,8 @@ def home():
         print("-------- NOT OK   -----------")
         return render_template('home.html', categories=categories, recentItemsAdded=recentItemsAdded)
     
-    # if request.method == 'POST':
-    #     return redirect(url_for('login'))
+    if request.method == 'POST':
+        return redirect(url_for('login'))
     
 
 
@@ -226,8 +301,11 @@ def showCategories():
 # Create a new category
 @app.route('/category/new/', methods=['GET', 'POST'])
 def newCategory():
+    if 'username' not in login_session:
+        return redirect('/login')
+
     if request.method == 'POST':
-        newCategory = Category(category_name=request.form['name'])
+        newCategory = Category(category_name=request.form['name'], user_id=login_session['user_id'])
         session.add(newCategory)
         flash('New Category %s Successfully Created' % newCategory.category_name)
         session.commit()
@@ -239,12 +317,14 @@ def newCategory():
 @app.route('/category/<int:category_id>/edit/', methods=['GET', 'POST'])
 def editCategory(category_id):
     # categories = session.query(Category).order_by(asc(Category.category_name))
-    print(category_id)
+    # print(category_id)
     editQuery = session.query(Category).filter_by(category_id=category_id).one()
     
     if request.method == 'POST':
         if request.form['name']:
             editQuery.category_name = request.form['name']
+            session.add(editQuery)
+            session.commit()
             flash('Edit Successful: %s' % editQuery.category_name)
             return redirect(url_for('showCategories'))
     else:
@@ -282,20 +362,25 @@ def showCategoryItems(category_id):
     category = session.query(Category).filter_by(category_id=category_id).one()
     items = session.query(Item).filter_by(category_id = category_id).all()
 
-    return render_template('items1.html', items=items, category=category)
+    return render_template('categoryitems.html', items=items, category=category)
 
 
 # Add new item for a Category
 @app.route('/category/<int:category_id>/new', methods=['GET', 'POST'])
 def addNewItemForCategory(category_id):
     category = session.query(Category).filter_by(category_id=category_id).one()
+    # items = session.query(Item).filter_by(category_id = category_id).all()
+
     if request.method == 'POST':
+        # newItem = Item(item_name=request.form['name'], item_description=request.form['description'], 
+        # category_id=category_id, user_id=request.form['user_id'])
         newItem = Item(item_name=request.form['name'], item_description=request.form['description'], 
-        category_id=category_id, user_id=request.form['user_id'])
+        category_id=category_id, user_id=login_session['user_id'])
         session.add(newItem)
         flash('SUCCESS: New Item %s Successfully Created' % newItem.item_name)
         session.commit()
-        return redirect(url_for('showAllItems'))
+        # return redirect(url_for('showAllItems'))
+        return redirect(url_for('showCategoryItems', category_id=category.category_id))
     else:
         return render_template('newitem.html', category=category)
 
@@ -310,7 +395,8 @@ def editItemInCategory(category_id, item_id):
         if request.form['name']:
             editItem.item_name = request.form['name']
             flash('Edit Successful: %s' % editItem.item_name)
-            return redirect(url_for('showCategories'))
+            # return redirect(url_for('showCategories'))
+            return redirect(url_for('showCategoryItems', category_id=category.category_id))
     else:
         return render_template('edititem.html', item=editItem, category=category)
     # return("Edit item in a Category: WIP")
@@ -340,3 +426,4 @@ if __name__ == '__main__':
     app.secret_key = 'super_secret_key'
     app.debug = True
     app.run(host='0.0.0.0', port=8000)
+    
