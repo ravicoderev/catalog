@@ -47,7 +47,7 @@ APPLICATION_NAME = "Sporting Goods Catalog App"
 # Connect to Database and create database session
 # engine = create_engine('sqlite:///catalog.db', connect_args={'check_same_thread':False})
 Base = declarative_base()
-engine = create_engine('sqlite:///catalogitems.db', connect_args={'check_same_thread':False}) # , echo=True) # , listeners= [MyListener()])
+engine = create_engine('sqlite:///catalogitems_test.db', connect_args={'check_same_thread':False}) # , echo=True) # , listeners= [MyListener()])
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 Base.metadata.create_all(engine)
@@ -180,15 +180,20 @@ def createUser(login_session):
     session.add(newUser)
     session.commit()
     user = session.query(User).filter_by(user_email=login_session['email']).one()
-    return user.user_id
-    # try:
-    #     session.commit()
-    #     user = session.query(User).filter_by(user_email=login_session['email']).one()
-    #     return user.user_id
-    # except:I
-    #     print("Exception occurred in createUser() method")
-    #     session.rollback()
-    #     return None
+    # return user.user_id
+    try:
+        session.commit()
+        print("Create User: Session Commit")
+        user = session.query(User).filter_by(user_email=login_session['email']).one()
+        return user.user_id
+    except:
+        print("Create User:Exception occurred in createUser() method")
+        session.rollback()
+        return None
+    finally:
+        session.close()
+        print("Create User: Session Closed")
+
 
 def getUserInfo(user_id):
     user = session.query(User).filter_by(user_id=user_id).one()
@@ -200,10 +205,6 @@ def getUserID(email):
         return user.user_id
     except:
         return None
-
-
-
-
 # User Details END
 
 # ----------------- gdisconnect() start
@@ -307,9 +308,15 @@ def newCategory():
     if request.method == 'POST':
         newCategory = Category(category_name=request.form['name'], user_id=login_session['user_id'])
         session.add(newCategory)
-        flash('New Category %s Successfully Created' % newCategory.category_name)
-        session.commit()
-        return redirect(url_for('showCategories'))
+        try:
+            session.commit()
+            flash('CREATE SUCCESS!!: " %s " ...new category added' % newCategory.category_name)
+            return redirect(url_for('showCategories'))
+        except:
+            print("Create New Category: Exception during commit")
+        finally:
+            session.close()
+            
     else:
         return render_template('newCategory.html')
 
@@ -324,12 +331,17 @@ def editCategory(category_id):
         if request.form['name']:
             editQuery.category_name = request.form['name']
             session.add(editQuery)
-            session.commit()
-            flash('Edit Successful: %s' % editQuery.category_name)
-            return redirect(url_for('showCategories'))
+            try:
+                session.commit()
+                flash('EDIT SUCCESS!!: " %s " ...category modified' % editQuery.category_name)
+                return redirect(url_for('showCategories'))
+            except:
+                print("Edit Category: Exception during commit")
+            finally:
+                session.close() 
     else:
         return render_template('editcategory.html', category=editQuery)
-    # return "Feature WIP"
+    
 
 
 # Delete a category
@@ -339,9 +351,14 @@ def deleteCategory(category_id):
         Category).filter_by(category_id=category_id).one()
     if request.method == 'POST':
         session.delete(deleteQuery)
-        flash('Delete Successful: %s' % deleteQuery.category_name)
-        session.commit()
-        return redirect(url_for('showCategories'))
+        try:
+            session.commit()
+            flash('DELETE SUCCESS!!: " %s " ...category deleted' % deleteQuery.category_name)
+            return redirect(url_for('showCategories'))
+        except:
+            print("Delete Category: Exception during commit")
+        finally:
+            session.close() 
     else:
         return render_template('deletecategory.html', category=deleteQuery)
 
