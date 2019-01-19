@@ -47,7 +47,7 @@ APPLICATION_NAME = "Sporting Goods Catalog App"
 # Connect to Database and create database session
 # engine = create_engine('sqlite:///catalog.db', connect_args={'check_same_thread':False})
 Base = declarative_base()
-engine = create_engine('sqlite:///catalogitems_test.db', connect_args={'check_same_thread':False}) # , echo=True) # , listeners= [MyListener()])
+engine = create_engine('sqlite:///catalogitems.db', connect_args={'check_same_thread':False}) # , echo=True) # , listeners= [MyListener()])
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 Base.metadata.create_all(engine)
@@ -337,8 +337,15 @@ def editCategory(category_id):
     # categories = session.query(Category).order_by(asc(Category.category_name))
     # print(category_id)
     editQuery = session.query(Category).filter_by(category_id=category_id).one()
-    
+    print("editQuery -- user_id is : ", editQuery.user_id)
+    print("Login Session user id is : ", login_session['user_id'])
+    if (editQuery.user_id != login_session['user_id']):
+        flash('EDIT NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % editQuery.category_name)
+        return redirect(url_for('showCategories'))
+
     if request.method == 'POST':
+        
+
         if request.form['name']:
             editQuery.category_name = request.form['name']
             session.add(editQuery)
@@ -360,6 +367,10 @@ def editCategory(category_id):
 def deleteCategory(category_id):
     deleteQuery = session.query(
         Category).filter_by(category_id=category_id).one()
+    if (deleteQuery.user_id != login_session['user_id']):
+            flash('DELETE NOT ALLOWED!!: " %s " ...creator alone has permission to delete' % deleteQuery.category_name)
+            return redirect(url_for('showCategories'))
+
     if request.method == 'POST':
         session.delete(deleteQuery)
         try:
