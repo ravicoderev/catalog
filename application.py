@@ -394,10 +394,14 @@ def addNewItemForCategory(category_id):
         newItem = Item(item_name=request.form['name'], item_description=request.form['description'], 
         category_id=category_id, user_id=login_session['user_id'])
         session.add(newItem)
-        flash('SUCCESS: New Item %s Successfully Created' % newItem.item_name)
-        session.commit()
-        # return redirect(url_for('showAllItems'))
-        return redirect(url_for('showCategoryItems', category_id=category.category_id))
+        try:
+            session.commit()
+            flash('CREATE SUCCESS!!: " %s " ...new item added to category' % newItem.item_name)
+            return redirect(url_for('showCategoryItems', category_id=category.category_id))
+        except:
+            print("Create New Item: Exception during commit")
+        finally:
+            session.close()
     else:
         return render_template('newitem.html', category=category)
 
@@ -411,12 +415,17 @@ def editItemInCategory(category_id, item_id):
     if request.method == 'POST':
         if request.form['name']:
             editItem.item_name = request.form['name']
-            flash('Edit Successful: %s' % editItem.item_name)
-            # return redirect(url_for('showCategories'))
-            return redirect(url_for('showCategoryItems', category_id=category.category_id))
+            try:
+                session.commit()
+                flash('EDIT SUCCESS!!: " %s " ...item name modified' % editItem.item_name)
+                return redirect(url_for('showCategoryItems', category_id=category.category_id))
+            except:
+                print("Edit Item: Exception during commit")
+            finally:
+                session.close()
     else:
         return render_template('edititem.html', item=editItem, category=category)
-    # return("Edit item in a Category: WIP")
+   
 
 
 # Delete item in a Category
@@ -427,9 +436,14 @@ def deleteItemInCategory(category_id, item_id):
     category = session.query(Category).filter_by(category_id=category_id).one()
     if request.method == 'POST':
         session.delete(deleteItem)
-        session.commit()
-        flash('Delete Successful: %s' % deleteItem.item_name)
-        return redirect(url_for('showCategoryItems', category_id=category.category_id))
+        try:
+            session.commit()
+            flash('DELETE SUCCESS!!: " %s " ...item name deleted' % deleteItem.item_name)
+            return redirect(url_for('showCategoryItems', category_id=category.category_id))
+        except:
+            print("Delete Item: Exception during commit")
+        finally:
+            session.close()
     else:
         return render_template('deleteitem.html', item=deleteItem, category=category)
     # return("Delete item in a Category: WIP")
