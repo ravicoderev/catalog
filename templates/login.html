@@ -11,18 +11,19 @@
 <!-- GOOGLE PLUS SIGN IN BUTTON-->
 
           
-          <div id="signinButton">
-          <span class="g-signin"
-            data-scope="openid email"
-            data-clientid="578211746527-a0vjl25g7re3adm71e5m45b9pmp6kr4q.apps.googleusercontent.com"
-            data-redirecturi="postmessage"
-            data-accesstype="offline"
-            data-cookiepolicy="single_host_origin"
-            data-callback="signInCallback"
-            data-approvalprompt="force">
-          </span>
-        </div>
+         
 
+<div id="signinButton">
+    <span class="g-signin"
+      data-scope="openid email"
+      data-clientid="578211746527-a0vjl25g7re3adm71e5m45b9pmp6kr4q.apps.googleusercontent.com"
+      data-redirecturi="postmessage"
+      data-accesstype="offline"
+      data-cookiepolicy="single_host_origin"
+      data-callback="signInCallback"
+      data-approvalprompt="force">
+    </span>
+  </div>
 
     <div id="result"></div>
     <script>
@@ -30,7 +31,7 @@
               if (authResult['code']) {
                     // Hide the sign-in button now that the user is authorized
                     $('#signinButton').attr('style', 'display: none');
-                    // Send the one-time-use code to the server, if the server responds, write a 'login successful' message to the web page and then redirect back to the main restaurants page
+                    // Send the one-time-use code to the server, if the server responds, write a 'login successful' message to the web page and then redirect back to the /home page
                     $.ajax({
                     type: 'POST',
                     url: '/gconnect?state={{STATE}}',
@@ -43,7 +44,7 @@
                         if (result) {
                         $('#result').html('Login Successful!</br>'+ result + '</br>Redirecting...')
                         setTimeout(function() {
-                        window.location.href = "/category";
+                        window.location.href = "/home";
                         }, 4000);
                         
                         } else if (authResult['error']) {
