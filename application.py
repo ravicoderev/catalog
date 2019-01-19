@@ -434,9 +434,16 @@ def addNewItemForCategory(category_id):
 def editItemInCategory(category_id, item_id):
     editItem = session.query(Item).filter_by(item_id=item_id).one()
     category = session.query(Category).filter_by(category_id=category_id).one()
+    
+    if (editItem.user_id != login_session['user_id']):
+        flash('EDIT NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % editItem.item_name)
+        return redirect(url_for('showCategoryItems', category_id=category.category_id))
+
     if request.method == 'POST':
         if request.form['name']:
             editItem.item_name = request.form['name']
+            editItem.item_description = request.form['description']
+            session.add(editItem)
             try:
                 session.commit()
                 flash('EDIT SUCCESS!!: " %s " ...item name modified' % editItem.item_name)
@@ -456,6 +463,11 @@ def editItemInCategory(category_id, item_id):
 def deleteItemInCategory(category_id, item_id):
     deleteItem = session.query(Item).filter_by(item_id=item_id).one()
     category = session.query(Category).filter_by(category_id=category_id).one()
+    
+    if (deleteItem.user_id != login_session['user_id']):
+        flash('DELETE NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % deleteItem.item_name)
+        return redirect(url_for('showCategoryItems', category_id=category.category_id))
+
     if request.method == 'POST':
         session.delete(deleteItem)
         try:

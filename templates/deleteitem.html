@@ -6,7 +6,7 @@
             </div>
             <div class="row banner menu">
                 <div class="col-md-11 col-md-offset-1 padding-none">
-                    <h1>Delete {{item.item_name}}</h1>
+                    <h1>Delete Item: </h1>{{item.item_name}}
                 </div>
                 <div class="col-md-11 col-md-offset-1 padding-none">
                         <h2> Are you sure you want to delete? </h2>
@@ -21,6 +21,24 @@
                                         <button class="btn btn-default delete">
                                         <span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Cancel</button>
                                     </a>
+                                    <br><br>
+                                    <p>
+                                            <div class="form-group">
+                                                    <p>
+                                                        <label for="name">Name:</label>
+                                                        <input type ="text" size="50" class="form-control" name="name" value="{{item.item_name }}" readonly>
+                                                    </p>
+                                                    <p>
+                                                        <label for="name">Item Description:</label>
+                                                        
+                                                        <textarea rows="3" cols="60" class="form-control" name="description" readonly>{{item.item_description }}
+                                                            </textarea><br>
+                                                    </p>    
+                                                    
+                                                </div>
+
+
+                                    </p>
                     </form>
                 </div>
             </div>
