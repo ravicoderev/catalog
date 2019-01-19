@@ -122,8 +122,7 @@ def gconnect():
     stored_access_token = login_session.get('access_token')
     stored_g_id = login_session.get('g_id')
     if stored_access_token is not None and g_id == stored_g_id:
-        response = make_response(json.dumps('Current user is already connected.'),
-                                 200)
+        response = make_response(json.dumps('Current user is already connected.'), 200)
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -178,9 +177,6 @@ def gconnect():
 def createUser(login_session):
     newUser = User(user_name = login_session['username'], user_email=login_session['email'], user_picture=login_session['picture'])
     session.add(newUser)
-    session.commit()
-    user = session.query(User).filter_by(user_email=login_session['email']).one()
-    # return user.user_id
     try:
         session.commit()
         print("Create User: Session Commit")
@@ -299,6 +295,18 @@ def showCategories():
     recentItemsAdded = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
     return render_template('categories.html', categories=categories,recentItemsAdded=recentItemsAdded)
 
+# Check if the category alredy exists
+def checkCategoryNameExists(category_name_exists):
+    name_exists = None
+    categoryquery = (session.query(Category).filter_by(category_name = category_name_exists).one())
+    if (category_name_exists in categoryquery.category_name):
+        name_exists = True
+    else:
+        name_exists = False
+    return name_exists
+        
+
+
 # Create a new category
 @app.route('/category/new/', methods=['GET', 'POST'])
 def newCategory():
@@ -307,16 +315,19 @@ def newCategory():
 
     if request.method == 'POST':
         newCategory = Category(category_name=request.form['name'], user_id=login_session['user_id'])
-        session.add(newCategory)
-        try:
-            session.commit()
-            flash('CREATE SUCCESS!!: " %s " ...new category added' % newCategory.category_name)
+        if checkCategoryNameExists(newCategory.category_name) is True:
+            flash('DUPPLICATE CATEGORY!!: " %s " ...category name already exists' % newCategory.category_name)
             return redirect(url_for('showCategories'))
-        except:
-            print("Create New Category: Exception during commit")
-        finally:
-            session.close()
-            
+        else:
+            session.add(newCategory)
+            try:
+                session.commit()
+                flash('CREATE SUCCESS!!: " %s " ...new category added' % newCategory.category_name)
+                return redirect(url_for('showCategories'))
+            except:
+                print("Create New Category: Exception during commit")
+            finally:
+                session.close()
     else:
         return render_template('newCategory.html')
 
