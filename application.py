@@ -293,7 +293,7 @@ def home():
 def showCategories():
     categories = (session.query(Category).order_by(Category.category_name).all())
     recentItemsAdded = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
-    return render_template('categories.html', categories=categories,recentItemsAdded=recentItemsAdded)
+    return render_template('categories_only.html', categories=categories,recentItemsAdded=recentItemsAdded)
 
 # Check if the category alredy exists
 def checkCategoryNameExists(category_name_exists):

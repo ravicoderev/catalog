@@ -1,47 +1,22 @@
-
-<html>
-        <head>
-                <link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
-        </head>
-	
-    
-    <h1> ZZ Sporting Goods 
-   
-        <input type="button" value="Login" style="float: right" onclick="location.href = '{{url_for('showLogin')}}'";>
-    </h1>
-        
-    <hr>
-	
-		<body>
-                
-  	
-			<div class = 'flash'>
-				{% with messages = get_flashed_messages() %}
-					{% if messages %}
-	
-						<ul>
-						{% for message in messages %}
-							<li> <strong> {{ message }} </strong> </li>
-						{% endfor %}
-						</ul>
-					{% endif %}
-				{% endwith %}
-	
-			</div>
-				
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %} 
 			<div class = 'name'>
+                    <div class="row divider green">
+                            <div class="col-md-12"></div>
+                    </div>
+                    <p></p>
+
                 <div class = 'categories'>
                         <header>
                                 <h2 class="font-weight-light">Categories</h2>
                         </header>
 
 						<table>
-
 								<tr>
 									<th> Category ID </th>
                                     <th> Category Name </th>
                                     <th colspan="1"> Category Options </th>
-									
 								</tr>
 
 								{% for c in categories %}
@@ -86,9 +61,6 @@
 
                 </div>    
 			</div>
-		</body>
-	
-	</html>
-	
+{% endblock %}	
 	
 	

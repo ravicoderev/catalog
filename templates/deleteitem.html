@@ -1,12 +1,13 @@
-<html>
-<body>
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
 
         <div class="row divider green">
                 <div class="col-md-12"></div>
             </div>
             <div class="row banner menu">
                 <div class="col-md-11 col-md-offset-1 padding-none">
-                    <h1>Delete Item: </h1>{{item.item_name}}
+                    <h1>Delete Item: {{item.item_name}}</h1>
                 </div>
                 <div class="col-md-11 col-md-offset-1 padding-none">
                         <h2> Are you sure you want to delete? </h2>
@@ -44,5 +45,4 @@
             </div>
       
 
-</body>
-</html>
+{% endblock %}	

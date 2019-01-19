@@ -1,31 +1,13 @@
-
-<html>
-	<head>
-		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
-	</head>
-	<h1> Sporting Goods Item List </h1>
-	<hr>
-	
-		<body>
-	
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
 	
 			
-	
-	
-			<div class = 'flash'>
-				{% with messages = get_flashed_messages() %}
-					{% if messages %}
-	
-						<ul>
-						{% for message in messages %}
-							<li> <strong> {{ message }} </strong> </li>
-						{% endfor %}
-						</ul>
-					{% endif %}
-				{% endwith %}
-	
-			</div>
 			<div class = 'name'>
+                    <div class="row divider green">
+                            <div class="col-md-12"></div>
+                    </div>
+                    <p></p>
                     
                     <table>
 
@@ -35,7 +17,7 @@
                             <th> Item Description </th>
                             <th> Category ID </th>
                             <th> User ID </th>
-                            <th colspan="2"> Options </th>
+                            
                         </tr>
                         
                         {% for i in items %}
@@ -55,9 +37,7 @@
 	
 			
 			</div>
-		</body>
-	
-	</html>
+{% endblock %}
 	
 	
 	
