@@ -303,13 +303,17 @@ def showCategories():
 # Check if the category alredy exists
 def checkCategoryNameExists(category_name_exists):
     name_exists = None
-    categoryquery = (session.query(Category).filter_by(category_name=category_name_exists).one())
-    if category_name_exists in categoryquery.category_name:
-        name_exists = True
-    else:
-        name_exists = False
+    print(category_name_exists)
+    try:
+        categoryquery = (session.query(Category).filter_by(category_name=category_name_exists).one())
+        print("Category Names - ONE() -- ********: ", categoryquery)
+        name_exists=True
+    except:
+        print("Category Does NOT Exist -- ********: ")
+        name_exists=False
+    
     return name_exists
-        
+            
 
 # Create a new category
 @app.route('/category/new/', methods=['GET', 'POST'])
@@ -319,10 +323,12 @@ def newCategory():
 
     if request.method == 'POST':
         newCategory = Category(category_name=request.form['name'], user_id=login_session['user_id'])
+        print(newCategory)
         if checkCategoryNameExists(newCategory.category_name) is True:
             flash('DUPPLICATE CATEGORY!!: " %s " ...category name already exists' % newCategory.category_name)
             return redirect(url_for('showCategories'))
         else:
+            print("Inside ELSE")
             session.add(newCategory)
             try:
                 session.commit()
