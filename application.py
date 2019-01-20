@@ -293,7 +293,6 @@ def home():
 
 
 # Show all categories
-# @app.route('/')
 @app.route('/category/')
 def showCategories():
     categories = (session.query(Category).order_by(Category.category_name).all())
@@ -488,6 +487,35 @@ def deleteItemInCategory(category_id, item_id):
 
 
 # **** END ITEMS ****
+
+
+# JSON API End Points 
+
+# Show all categories
+@app.route('/categories/JSON')
+def showCategoriesJSON():
+    categories = (session.query(Category).order_by(Category.category_name).all())
+    return jsonify(Categories=[c.serialize for c in categories])
+
+# Show details of a specific category
+@app.route('/categorydetails/<int:category_id>/JSON')
+def categoryDetailsJSON(category_id):
+    category = session.query(Category).filter_by(category_id=category_id).one()
+    return jsonify(CategoryDetails=category.serialize)
+
+
+@app.route('/recentitems/JSON')
+def showrecentItems():
+    recentItemsAdded = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
+    return jsonify(RecentItems=[c.serialize for c in recentItemsAdded])
+
+# Show all items in Category
+@app.route('/category/<int:category_id>/items/JSON')
+def showItemsInCategory(category_id):
+    items = session.query(Item).filter_by(category_id=category_id).all()
+    return jsonify(CategoryItems=[i.serialize for i in items])
+
+# END API End Points
 
 
 if __name__ == '__main__':
