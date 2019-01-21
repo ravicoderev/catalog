@@ -262,7 +262,6 @@ def gdisconnect():
 
 # Check login status
 def loginStatus():
-    
     print(login_session.get('access_token'), login_session.get('email'))
     if 'access_token' in login_session:
         login_status = True
@@ -279,10 +278,8 @@ def home():
     recentItemsAdded = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
     login_status = loginStatus()
     if login_status is True:
-        print("-------- OK   -----------")
         return render_template('categories.html', categories=categories, recentItemsAdded=recentItemsAdded)
     else:
-        print("-------- NOT OK   -----------")
         return render_template('home.html', categories=categories, recentItemsAdded=recentItemsAdded)
     
     if request.method == 'POST':
@@ -295,9 +292,15 @@ def home():
 # Show all categories
 @app.route('/category/')
 def showCategories():
-    categories = (session.query(Category).order_by(Category.category_name).all())
-    recentItemsAdded = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
-    return render_template('categories_only.html', categories=categories, recentItemsAdded=recentItemsAdded)
+    login_status = loginStatus()
+    if login_status is True:
+        categories = (session.query(Category).order_by(Category.category_name).all())
+        recentItemsAdded = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
+        return render_template('categories_only.html', categories=categories, recentItemsAdded=recentItemsAdded)
+    else:
+        flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
+        return redirect(url_for('home'))
+
 
 
 # Check if the category alredy exists
@@ -318,28 +321,32 @@ def checkCategoryNameExists(category_name_exists):
 # Create a new category
 @app.route('/category/new/', methods=['GET', 'POST'])
 def newCategory():
-    if 'username' not in login_session:
-        return redirect('/login')
-
-    if request.method == 'POST':
-        newCategory = Category(category_name=request.form['name'], user_id=login_session['user_id'])
-        print(newCategory)
-        if checkCategoryNameExists(newCategory.category_name) is True:
-            flash('DUPPLICATE CATEGORY!!: " %s " ...category name already exists' % newCategory.category_name)
-            return redirect(url_for('showCategories'))
-        else:
-            print("Inside ELSE")
-            session.add(newCategory)
-            try:
-                session.commit()
-                flash('CREATE SUCCESS!!: " %s " ...new category added' % newCategory.category_name)
+    # if 'username' not in login_session:
+    #     return redirect('/login')
+    login_status = loginStatus()
+    if login_status is True:
+        if request.method == 'POST':
+            newCategory = Category(category_name=request.form['name'], user_id=login_session['user_id'])
+            print(newCategory)
+            if checkCategoryNameExists(newCategory.category_name) is True:
+                flash('DUPPLICATE CATEGORY!!: " %s " ...category name already exists' % newCategory.category_name)
                 return redirect(url_for('showCategories'))
-            except:
-                print("Create New Category: Exception during commit")
-            finally:
-                session.close()
+            else:
+                print("Inside ELSE")
+                session.add(newCategory)
+                try:
+                    session.commit()
+                    flash('CREATE SUCCESS!!: " %s " ...new category added' % newCategory.category_name)
+                    return redirect(url_for('showCategories'))
+                except:
+                    print("Create New Category: Exception during commit")
+                finally:
+                    session.close()
+        else:
+            return render_template('newCategory.html')
     else:
-        return render_template('newCategory.html')
+        flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
+        return redirect(url_for('home'))
 
 
 # Edit a category
@@ -347,51 +354,61 @@ def newCategory():
 def editCategory(category_id):
     # categories = session.query(Category).order_by(asc(Category.category_name))
     # print(category_id)
-    editQuery = session.query(Category).filter_by(category_id=category_id).one()
-    print("editQuery -- user_id is : ", editQuery.user_id)
-    print("Login Session user id is : ", login_session['user_id'])
-    if editQuery.user_id != login_session['user_id']:
-        flash('EDIT NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % editQuery.category_name)
-        return redirect(url_for('showCategories'))
+    login_status = loginStatus()
+    if login_status is True:
+        editQuery = session.query(Category).filter_by(category_id=category_id).one()
+        print("editQuery -- user_id is : ", editQuery.user_id)
+        print("Login Session user id is : ", login_session['user_id'])
+        if editQuery.user_id != login_session['user_id']:
+            flash('EDIT NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % editQuery.category_name)
+            return redirect(url_for('showCategories'))
 
-    if request.method == 'POST':
-        
-        if request.form['name']:
-            editQuery.category_name = request.form['name']
-            session.add(editQuery)
-            try:
-                session.commit()
-                flash('EDIT SUCCESS!!: " %s " ...category modified' % editQuery.category_name)
-                return redirect(url_for('showCategories'))
-            except:
-                print("Edit Category: Exception during commit")
-            finally:
-                session.close() 
+        if request.method == 'POST':
+            
+            if request.form['name']:
+                editQuery.category_name = request.form['name']
+                session.add(editQuery)
+                try:
+                    session.commit()
+                    flash('EDIT SUCCESS!!: " %s " ...category modified' % editQuery.category_name)
+                    return redirect(url_for('showCategories'))
+                except:
+                    print("Edit Category: Exception during commit")
+                finally:
+                    session.close() 
+        else:
+            return render_template('editcategory.html', category=editQuery)
     else:
-        return render_template('editcategory.html', category=editQuery)
+        flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
+        return redirect(url_for('home'))
     
 
 # Delete a category
 @app.route('/category/<int:category_id>/delete/', methods=['GET', 'POST'])
 def deleteCategory(category_id):
-    deleteQuery = session.query(
-        Category).filter_by(category_id=category_id).one()
-    if deleteQuery.user_id != login_session['user_id']:
-            flash('DELETE NOT ALLOWED!!: " %s " ...creator alone has permission to delete' % deleteQuery.category_name)
-            return redirect(url_for('showCategories'))
+    login_status = loginStatus()
+    if login_status is True:
+        deleteQuery = session.query(
+            Category).filter_by(category_id=category_id).one()
+        if deleteQuery.user_id != login_session['user_id']:
+                flash('DELETE NOT ALLOWED!!: " %s " ...creator alone has permission to delete' % deleteQuery.category_name)
+                return redirect(url_for('showCategories'))
 
-    if request.method == 'POST':
-        session.delete(deleteQuery)
-        try:
-            session.commit()
-            flash('DELETE SUCCESS!!: " %s " ...category deleted' % deleteQuery.category_name)
-            return redirect(url_for('showCategories'))
-        except:
-            print("Delete Category: Exception during commit")
-        finally:
-            session.close() 
+        if request.method == 'POST':
+            session.delete(deleteQuery)
+            try:
+                session.commit()
+                flash('DELETE SUCCESS!!: " %s " ...category deleted' % deleteQuery.category_name)
+                return redirect(url_for('showCategories'))
+            except:
+                print("Delete Category: Exception during commit")
+            finally:
+                session.close() 
+        else:
+            return render_template('deletecategory.html', category=deleteQuery)
     else:
-        return render_template('deletecategory.html', category=deleteQuery)
+        flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
+        return redirect(url_for('home'))
 
 # **** END CATEGORY ****
 
@@ -401,95 +418,109 @@ def deleteCategory(category_id):
 # Show all items
 @app.route('/items/')
 def showAllItems():
-    items = session.query(Item).order_by(asc(Item.item_name))
-    return render_template('items.html', items=items)
+    
+        items = session.query(Item).order_by(asc(Item.item_name))
+        return render_template('items.html', items=items)
+    
 
 
 # Show all items in Category
-@app.route('/category/<int:category_id>/')
 @app.route('/category/<int:category_id>/items/')
 def showCategoryItems(category_id):
     category = session.query(Category).filter_by(category_id=category_id).one()
     items = session.query(Item).filter_by(category_id=category_id).all()
-
     return render_template('categoryitems.html', items=items, category=category)
 
 
 # Add new item for a Category
 @app.route('/category/<int:category_id>/new', methods=['GET', 'POST'])
 def addNewItemForCategory(category_id):
-    category = session.query(Category).filter_by(category_id=category_id).one()
-    # items = session.query(Item).filter_by(category_id = category_id).all()
+    login_status = loginStatus()
+    if login_status is True:
+        category = session.query(Category).filter_by(category_id=category_id).one()
+        # items = session.query(Item).filter_by(category_id = category_id).all()
 
-    if request.method == 'POST':
-        # newItem = Item(item_name=request.form['name'], item_description=request.form['description'], 
-        # category_id=category_id, user_id=request.form['user_id'])
-        newItem = Item(item_name=request.form['name'], item_description=request.form['description'],
-                       category_id=category_id, user_id=login_session['user_id'])
-        session.add(newItem)
-        try:
-            session.commit()
-            flash('CREATE SUCCESS!!: " %s " ...new item added to category' % newItem.item_name)
-            return redirect(url_for('showCategoryItems', category_id=category.category_id))
-        except:
-            print("Create New Item: Exception during commit")
-        finally:
-            session.close()
+        if request.method == 'POST':
+            # newItem = Item(item_name=request.form['name'], item_description=request.form['description'], 
+            # category_id=category_id, user_id=request.form['user_id'])
+            newItem = Item(item_name=request.form['name'], item_description=request.form['description'],
+                        category_id=category_id, user_id=login_session['user_id'])
+            session.add(newItem)
+            try:
+                session.commit()
+                flash('CREATE SUCCESS!!: " %s " ...new item added to category' % newItem.item_name)
+                return redirect(url_for('showCategoryItems', category_id=category.category_id))
+            except:
+                print("Create New Item: Exception during commit")
+            finally:
+                session.close()
+        else:
+            return render_template('newitem.html', category=category)
     else:
-        return render_template('newitem.html', category=category)
+        flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
+        return redirect(url_for('home'))
 
 
 # Edit item in a Category
 # @app.route('/items/edit')
 @app.route('/category/<int:category_id>/items/<int:item_id>/edit', methods=['GET', 'POST'])
 def editItemInCategory(category_id, item_id):
-    editItem = session.query(Item).filter_by(item_id=item_id).one()
-    category = session.query(Category).filter_by(category_id=category_id).one()
-    
-    if editItem.user_id != login_session['user_id']:
-        flash('EDIT NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % editItem.item_name)
-        return redirect(url_for('showCategoryItems', category_id=category.category_id))
+    login_status = loginStatus()
+    if login_status is True:
+        editItem = session.query(Item).filter_by(item_id=item_id).one()
+        category = session.query(Category).filter_by(category_id=category_id).one()
+        
+        if editItem.user_id != login_session['user_id']:
+            flash('EDIT NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % editItem.item_name)
+            return redirect(url_for('showCategoryItems', category_id=category.category_id))
 
-    if request.method == 'POST':
-        if request.form['name']:
-            editItem.item_name = request.form['name']
-            editItem.item_description = request.form['description']
-            session.add(editItem)
-            try:
-                session.commit()
-                flash('EDIT SUCCESS!!: " %s " ...item name modified' % editItem.item_name)
-                return redirect(url_for('showCategoryItems', category_id=category.category_id))
-            except:
-                print("Edit Item: Exception during commit")
-            finally:
-                session.close()
+        if request.method == 'POST':
+            if request.form['name']:
+                editItem.item_name = request.form['name']
+                editItem.item_description = request.form['description']
+                session.add(editItem)
+                try:
+                    session.commit()
+                    flash('EDIT SUCCESS!!: " %s " ...item name modified' % editItem.item_name)
+                    return redirect(url_for('showCategoryItems', category_id=category.category_id))
+                except:
+                    print("Edit Item: Exception during commit")
+                finally:
+                    session.close()
+        else:
+            return render_template('edititem.html', item=editItem, category=category)
     else:
-        return render_template('edititem.html', item=editItem, category=category)
+        flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
+        return redirect(url_for('home'))
    
 
 # Delete item in a Category
 @app.route('/category/<int:category_id>/items/<int:item_id>/delete', methods=['GET', 'POST'])
 def deleteItemInCategory(category_id, item_id):
-    deleteItem = session.query(Item).filter_by(item_id=item_id).one()
-    category = session.query(Category).filter_by(category_id=category_id).one()
-    
-    if deleteItem.user_id != login_session['user_id']:
-        flash('DELETE NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % deleteItem.item_name)
-        return redirect(url_for('showCategoryItems', category_id=category.category_id))
-
-    if request.method == 'POST':
-        session.delete(deleteItem)
-        try:
-            session.commit()
-            flash('DELETE SUCCESS!!: " %s " ...item name deleted' % deleteItem.item_name)
+    login_status = loginStatus()
+    if login_status is True:
+        deleteItem = session.query(Item).filter_by(item_id=item_id).one()
+        category = session.query(Category).filter_by(category_id=category_id).one()
+        
+        if deleteItem.user_id != login_session['user_id']:
+            flash('DELETE NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % deleteItem.item_name)
             return redirect(url_for('showCategoryItems', category_id=category.category_id))
-        except:
-            print("Delete Item: Exception during commit")
-        finally:
-            session.close()
+
+        if request.method == 'POST':
+            session.delete(deleteItem)
+            try:
+                session.commit()
+                flash('DELETE SUCCESS!!: " %s " ...item name deleted' % deleteItem.item_name)
+                return redirect(url_for('showCategoryItems', category_id=category.category_id))
+            except:
+                print("Delete Item: Exception during commit")
+            finally:
+                session.close()
+        else:
+            return render_template('deleteitem.html', item=deleteItem, category=category)
     else:
-        return render_template('deleteitem.html', item=deleteItem, category=category)
-    # return("Delete item in a Category: WIP")
+        flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
+        return redirect(url_for('home'))
 
 
 # **** END ITEMS ****
