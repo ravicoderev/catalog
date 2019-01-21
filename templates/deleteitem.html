@@ -16,12 +16,9 @@
             <div class="row">
                 <div class="col-md-6 col-md-offset-1 padding-top">
                     <form action="{{ url_for('deleteItemInCategory',category_id=category.category_id, item_id=item.item_id)}}" method = "post">
-                            <button type="submit" class="btn btn-default delete" id="submit" type="submit">
-                                    <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>Delete Item</button>
-                                    <a href = '{{url_for('showCategoryItems', category_id=category.category_id)}}'>
-                                        <button class="btn btn-default delete">
-                                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Cancel</button>
-                                    </a>
+                            
+                                    <input type="submit" style="width:100px; height:50px;" value="Delete" >    
+                                    <input type="button" style="width:100px; height:50px;" value="Cancel" onclick="location.href = '{{url_for('showCategoryItems', category_id=category.category_id, item_id=item.item_id)}}'">
                                     <br><br>
                                     <p>
                                             <div class="form-group">

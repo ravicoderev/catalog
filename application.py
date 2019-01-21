@@ -507,6 +507,7 @@ def deleteItemInCategory(category_id, item_id):
             return redirect(url_for('showCategoryItems', category_id=category.category_id))
 
         if request.method == 'POST':
+            # if request.form['id'] == 'Cancel'
             session.delete(deleteItem)
             try:
                 session.commit()
@@ -516,6 +517,8 @@ def deleteItemInCategory(category_id, item_id):
                 print("Delete Item: Exception during commit")
             finally:
                 session.close()
+            # else:
+            #     return render_template('showCategoryItems', category_id=category.category_id)
         else:
             return render_template('deleteitem.html', item=deleteItem, category=category)
     else:
