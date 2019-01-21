@@ -46,7 +46,7 @@ class Item(Base):
     item_id = Column(Integer, primary_key=True)
     item_name = Column(String(80), nullable=False)
     item_description = Column(String(250))
-    category_id = Column(Integer, ForeignKey('category.category_id'))
+    category_id = Column(Integer, ForeignKey('category.category_id', ondelete='CASCADE'))
     category = relationship(Category)
     user_id = Column(Integer, ForeignKey('user.user_id'))
     user = relationship(User)
@@ -61,7 +61,7 @@ class Item(Base):
         }
 
 
-engine = create_engine('sqlite:///catalogitems_test.db', connect_args={'check_same_thread':False})
+engine = create_engine('sqlite:///sportscatalogitems.db', connect_args={'check_same_thread':False})
 
 
 Base.metadata.create_all(engine)

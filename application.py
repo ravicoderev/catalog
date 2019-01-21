@@ -50,7 +50,7 @@ APPLICATION_NAME = "Sporting Goods Catalog App"
 # Connect to Database and create database session
 # engine = create_engine('sqlite:///catalog.db', connect_args={'check_same_thread':False})
 # Base = declarative_base()
-engine = create_engine('sqlite:///catalogitems.db', connect_args={'check_same_thread': False})
+engine = create_engine('sqlite:///sportscatalogitems.db', connect_args={'check_same_thread': False})
 # , echo=True) # , listeners= [MyListener()])
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
