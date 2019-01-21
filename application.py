@@ -54,7 +54,7 @@ engine = create_engine('sqlite:///catalogitems.db', connect_args={'check_same_th
 # , echo=True) # , listeners= [MyListener()])
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
-Base.metadata.create_all(engine)
+
 
 # session.execute('pragma foreign_keys=on')
 # session.execute('pragma journal_mode=OFF')
