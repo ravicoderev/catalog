@@ -16,27 +16,24 @@
             <div class="row">
                 <div class="col-md-6 col-md-offset-1 padding-top">
                     <form action="{{ url_for('deleteItemInCategory',category_id=category.category_id, item_id=item.item_id)}}" method = "post">
-                            
-                                    <input type="submit" style="width:100px; height:50px;" value="Delete" >    
-                                    <input type="button" style="width:100px; height:50px;" value="Cancel" onclick="location.href = '{{url_for('showCategoryItems', category_id=category.category_id, item_id=item.item_id)}}'">
-                                    <br><br>
-                                    <p>
-                                            <div class="form-group">
+                                   <p>
+                                            <div >
                                                     <p>
                                                         <label for="name">Name:</label>
-                                                        <input type ="text" size="50" class="form-control" name="name" value="{{item.item_name }}" readonly>
-                                                    </p>
+                                                        {{item.item_name }}
+                                                    </p>     
                                                     <p>
+                                               
                                                         <label for="name">Item Description:</label>
-                                                        
-                                                        <textarea rows="3" cols="60" class="form-control" name="description" readonly>{{item.item_description }}
-                                                            </textarea><br>
-                                                    </p>    
+                                                        {{item.item_description }}
+                                                    </p>                                                    
                                                     
-                                                </div>
-
-
+                                            </div>
                                     </p>
+                                    <br><br>
+
+                                    <input type="submit" style="width:100px; height:50px;" value="Delete" >    
+                                    <input type="button" style="width:100px; height:50px;" value="Cancel" onclick="location.href = '{{url_for('showCategoryItems', category_id=category.category_id, item_id=item.item_id)}}'">
                     </form>
                 </div>
             </div>
