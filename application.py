@@ -30,16 +30,22 @@ import requests
 #         dbapi_con.execute('PRAGMA synchronous=OFF')
 #         dbapi_con.execute('PRAGMA cache_size=100000')
 
-# from sqlite3 import Connection as SQLite3Connection
-# from sqlalchemy import event
-# from sqlalchemy.engine import Engine
+''' 
+Enable Foreign Key Support Using Passive Deletes
+https://docs.sqlalchemy.org/en/latest/orm/collections.html#using-passive-deletes
+Implementing ON DELETE CASCADE
+https://docs.sqlalchemy.org/en/latest/dialects/sqlite.html#sqlite-foreign-keys
+'''
+from sqlite3 import Connection as SQLite3Connection
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 
-# @event.listens_for(Engine, "connect")
-# def _set_sqlite_pragma(dbapi_connection, connection_record):
-#     if isinstance(dbapi_connection, SQLite3Connection):
-#         cursor = dbapi_connection.cursor()
-#         cursor.execute("PRAGMA foreign_keys=ON;")
-#         cursor.close()
+@event.listens_for(Engine, "connect")
+def _set_sqlite_pragma(dbapi_connection, connection_record):
+    if isinstance(dbapi_connection, SQLite3Connection):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON;")
+        cursor.close()
 
 app = Flask(__name__)
 
