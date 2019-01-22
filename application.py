@@ -9,9 +9,6 @@ from flask import session as login_session
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from databasesetup import Base, Category, Item, User
-# from sqlalchemy.orm.exc import NoResultFound
-# from sqlalchemy.orm.exc import MultipleResultsFound
-# from sqlalchemy.ext.declarative import declarative_base
 
 # Authentication modules for google OAuth
 from oauth2client.client import flow_from_clientsecrets, FlowExchangeError
@@ -20,15 +17,7 @@ import random
 import string
 import json
 import requests
-# import httplib2
 
-# sqlite PRAGMA listeners
-# from sqlalchemy.interfaces import PoolListener
-# class MyListener(PoolListener):
-#     def connect(self, dbapi_con, con_record):
-#         dbapi_con.execute('pragma journal_mode=OFF')
-#         dbapi_con.execute('PRAGMA synchronous=OFF')
-#         dbapi_con.execute('PRAGMA cache_size=100000')
 
 ''' 
 Enable Foreign Key Support Using Passive Deletes
@@ -53,23 +42,13 @@ CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "Sporting Goods Catalog App"
 
-# Connect to Database and create database session
-# engine = create_engine('sqlite:///catalog.db', connect_args={'check_same_thread':False})
-# Base = declarative_base()
+
 engine = create_engine('sqlite:///sportscatalogitems.db', connect_args={'check_same_thread': False})
-# , echo=True) # , listeners= [MyListener()])
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
-# session.execute('pragma foreign_keys=on')
-# session.execute('pragma journal_mode=OFF')
-# session.execute('PRAGMA synchronous=OFF')
-
-
-# **** OAuth ****
-# START OAuth
-# Create anti-forgery state token
+# **** OAuth **** Create anti-forgery state token
 @app.route('/login')
 def showLogin():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
@@ -77,8 +56,6 @@ def showLogin():
     login_session['state'] = state
     return render_template('login.html', STATE=state)
     # return "The current session state is %s" % login_session['state']
-
-# --------------- gconnect()
 
 
 @app.route('/gconnect', methods=['POST'])
@@ -153,8 +130,6 @@ def gconnect():
 
     # Check for existing/new user
     user_id = getUserID(login_session['email'])
-    # user = session.query(User).filter_by(user_email=login_session['email']).one()
-    print("Get User ID is: ", user_id)
     if not user_id:
         print("Create New User ID")
         new_user_id = createUser(login_session)
@@ -178,11 +153,11 @@ def gconnect():
     print(login_session)
     return output
 
+# END gconnect() 
 
-# ----------------- gconnect() end
 
-# User Details START
-# Create new user
+
+# User details
 def createUser(login_session):
     newUser = User(user_name=login_session['username'], user_email=login_session['email'],
                    user_picture=login_session['picture'])
@@ -214,35 +189,26 @@ def getUserID(email):
         return None
 # User Details END
 
-# ----------------- gdisconnect() start
 
-# DISCONNECT - Revoke a current user's token and reset their login_session
-
-
+# START gdisconnect() - DISCONNECT - Revoke a current user's token and reset their login_session
 @app.route('/gdisconnect')
 def gdisconnect():
-    
     try:
-        # access_token = login_session['credentials']
         access_token = login_session.get('access_token')
     except KeyError:
         flash('Failed to get access token')
         return redirect(url_for('showCategories'))
-    # print("User's name was {}.".format(login_session['name']))
     if access_token is None:
         print('Access Token is None')
         response = make_response(json.dumps('Current user not connected.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
-    print('In gdisconnect access token is %s', access_token)
-    print('User name is: ')
-    print(login_session['username'])
+    
     # Check that the access token is valid. Converted to python 3 using requests instead of httplib2
     url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={}'.format(access_token))
     token_url = requests.get(url=url)
     result = json.loads(token_url.text)
-    print('result is ')
-    print(result)
+   
     if result is None:
         response = make_response(json.dumps('Failed to revoke token for given user.'), 400)
         response.headers['Content-Type'] = 'application/json'
@@ -257,14 +223,12 @@ def gdisconnect():
         response.headers['Content-Type'] = 'application/json'
         print('gdisconnect - ok')
         flash('Google Sign Out - Successfull!!')
-        # return redirect(url_for('showCategories'))
+ 
         return response
 
     
-# ------------------ gdisconnect() end
+# END OAuth **** gdisconnect()
 
-
-#  END OAuth ****
 
 # Check login status
 def loginStatus():
@@ -315,10 +279,8 @@ def checkCategoryNameExists(category_name_exists):
     print(category_name_exists)
     try:
         categoryquery = (session.query(Category).filter_by(category_name=category_name_exists).one())
-        print("Category Names - ONE() -- ********: ", categoryquery)
         name_exists=True
     except:
-        print("Category Does NOT Exist -- ********: ")
         name_exists=False
     
     return name_exists
@@ -327,8 +289,6 @@ def checkCategoryNameExists(category_name_exists):
 # Create a new category
 @app.route('/category/new/', methods=['GET', 'POST'])
 def newCategory():
-    # if 'username' not in login_session:
-    #     return redirect('/login')
     login_status = loginStatus()
     if login_status is True:
         if request.method == 'POST':
@@ -358,13 +318,9 @@ def newCategory():
 # Edit a category
 @app.route('/category/<int:category_id>/edit/', methods=['GET', 'POST'])
 def editCategory(category_id):
-    # categories = session.query(Category).order_by(asc(Category.category_name))
-    # print(category_id)
     login_status = loginStatus()
     if login_status is True:
         editQuery = session.query(Category).filter_by(category_id=category_id).one()
-        print("editQuery -- user_id is : ", editQuery.user_id)
-        print("Login Session user id is : ", login_session['user_id'])
         if editQuery.user_id != login_session['user_id']:
             flash('EDIT NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % editQuery.category_name)
             return redirect(url_for('showCategories'))
@@ -379,7 +335,9 @@ def editCategory(category_id):
                     flash('EDIT SUCCESS!!: " %s " ...category modified' % editQuery.category_name)
                     return redirect(url_for('showCategories'))
                 except:
-                    print("Edit Category: Exception during commit")
+                    flash('EDIT EXCEPTION OCCURRED!! Unable to edit. Something went wrong when saving the changes...')
+                    return redirect(url_for('showCategories'))
+                    
                 finally:
                     session.close() 
         else:
@@ -407,7 +365,9 @@ def deleteCategory(category_id):
                 flash('DELETE SUCCESS!!: " %s " ...category deleted' % deleteQuery.category_name)
                 return redirect(url_for('showCategories'))
             except:
-                print("Delete Category: Exception during commit")
+                flash('DELETE EXCEPTION OCCURRED!!: Delete Failed. Something went wrong when deleting category')
+                return redirect(url_for('showCategories'))
+                
             finally:
                 session.close() 
         else:
@@ -418,16 +378,14 @@ def deleteCategory(category_id):
 
 # **** END CATEGORY ****
 
+
 # **** START ITEMS ****
-
-
 # Show all items
 @app.route('/items/')
 def showAllItems():
     
         items = session.query(Item).order_by(asc(Item.item_name))
         return render_template('items.html', items=items)
-    
 
 
 # Show all items in Category
@@ -444,20 +402,18 @@ def addNewItemForCategory(category_id):
     login_status = loginStatus()
     if login_status is True:
         category = session.query(Category).filter_by(category_id=category_id).one()
-        # items = session.query(Item).filter_by(category_id = category_id).all()
-
+        
         if request.method == 'POST':
-            # newItem = Item(item_name=request.form['name'], item_description=request.form['description'], 
-            # category_id=category_id, user_id=request.form['user_id'])
             newItem = Item(item_name=request.form['name'], item_description=request.form['description'],
-                        category_id=category_id, user_id=login_session['user_id'])
+            category_id=category_id, user_id=login_session['user_id'])
             session.add(newItem)
             try:
                 session.commit()
                 flash('CREATE SUCCESS!!: " %s " ...new item added to category' % newItem.item_name)
                 return redirect(url_for('showCategoryItems', category_id=category.category_id))
             except:
-                print("Create New Item: Exception during commit")
+                flash('CREATE EXCEPTION OCCURRED!!: Failed to add new item. Something went wrong when adding new item.')
+                return redirect(url_for('showCategoryItems', category_id=category.category_id))
             finally:
                 session.close()
         else:
@@ -490,7 +446,8 @@ def editItemInCategory(category_id, item_id):
                     flash('EDIT SUCCESS!!: " %s " ...item name modified' % editItem.item_name)
                     return redirect(url_for('showCategoryItems', category_id=category.category_id))
                 except:
-                    print("Edit Item: Exception during commit")
+                    flash('EDIT EXCEPTION OCCURRED!!: Edit Failed. Something went wrong when saving changes')
+                    return redirect(url_for('showCategoryItems', category_id=category.category_id))
                 finally:
                     session.close()
         else:
@@ -513,18 +470,17 @@ def deleteItemInCategory(category_id, item_id):
             return redirect(url_for('showCategoryItems', category_id=category.category_id))
 
         if request.method == 'POST':
-            # if request.form['id'] == 'Cancel'
+            
             session.delete(deleteItem)
             try:
                 session.commit()
                 flash('DELETE SUCCESS!!: " %s " ...item name deleted' % deleteItem.item_name)
                 return redirect(url_for('showCategoryItems', category_id=category.category_id))
             except:
-                print("Delete Item: Exception during commit")
+                flash('DELETE EXCEPTION OCCURRED!!: Delete Failed. Something went wrong when deleting item')
+                return redirect(url_for('showCategoryItems', category_id=category.category_id))
             finally:
                 session.close()
-            # else:
-            #     return render_template('showCategoryItems', category_id=category.category_id)
         else:
             return render_template('deleteitem.html', item=deleteItem, category=category)
     else:
