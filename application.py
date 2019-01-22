@@ -290,7 +290,7 @@ def new_category():
                 flash('DUPPLICATE CATEGORY!!: " %s " ...category name already exists' % addcategory.category_name)
                 return redirect(url_for('show_categories'))
             else:
-              
+
                 session.add(addcategory)
                 try:
                     session.commit()

@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 
 Base = declarative_base()
 
+
 class User(Base):
     __tablename__ = 'user'
 
@@ -40,6 +41,7 @@ class Category(Base):
             'category_name': self.category_name
         }
 
+
 class Item(Base):
     __tablename__ = 'item'
 
@@ -61,7 +63,7 @@ class Item(Base):
         }
 
 
-engine = create_engine('sqlite:///sportscatalogitems.db', connect_args={'check_same_thread':False})
+engine = create_engine('sqlite:///sportscatalogitems.db', connect_args={'check_same_thread': False})
 
 
 Base.metadata.create_all(engine)

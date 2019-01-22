@@ -52,7 +52,7 @@ Create a web application that provides a list of items within a variety of categ
      ```
 
 	- You should see the following db file created in the current folder
-	    - catalogitems_test.db
+	    - sportscatalogitems.db
 
 **Application Start:**  
 1. Execute the python script to generate database
