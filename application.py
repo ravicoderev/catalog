@@ -7,8 +7,9 @@ from flask import session as login_session
 
 # SQL Alchemy modules
 from sqlalchemy import create_engine, asc
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
-from databasesetup import Base, Category, Item, User
+from databasesetup import Category, Item, User
 
 # Authentication modules for google OAuth
 from oauth2client.client import flow_from_clientsecrets, FlowExchangeError
@@ -29,6 +30,7 @@ from sqlite3 import Connection as SQLite3Connection
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
+
 @event.listens_for(Engine, "connect")
 def _set_sqlite_pragma(dbapi_connection, connection_record):
     if isinstance(dbapi_connection, SQLite3Connection):
@@ -36,7 +38,9 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):
         cursor.execute("PRAGMA foreign_keys=ON;")
         cursor.close()
 
+
 app = Flask(__name__)
+
 
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
@@ -50,9 +54,9 @@ session = DBSession()
 
 # **** OAuth **** Create anti-forgery state token
 @app.route('/login')
-def showLogin():
+def showlogin():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                    for x in range(32))
+                    for _ in range(32))
     login_session['state'] = state
     return render_template('login.html', STATE=state)
     # return "The current session state is %s" % login_session['state']
@@ -101,8 +105,7 @@ def gconnect():
     # Verify that the access token is valid for this app.
     if result['issued_to'] != CLIENT_ID:
         response = make_response(
-            json.dumps("Token's client ID does not match app's."), 401)
-        print("Token's client ID does not match app's.")
+        json.dumps("Token's client ID does not match app's."), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -129,16 +132,12 @@ def gconnect():
     login_session['email'] = data['email']
 
     # Check for existing/new user
-    user_id = getUserID(login_session['email'])
+    user_id = get_user_id(login_session['email'])
     if not user_id:
-        print("Create New User ID")
-        new_user_id = createUser(login_session)
-        print(new_user_id)
-        login_session['user_id'] = new_user_id
-        print("New User ID :", login_session['user_id'])
+       new_user_id = create_user(login_session)
+       login_session['user_id'] = new_user_id
     else:
         login_session['user_id'] = user_id
-        print("Existing User ID :", login_session['user_id'])
 
     output = b''
     output += b'<h1>Welcome, '
@@ -149,44 +148,43 @@ def gconnect():
     output += b' " style = "width: 300px; height: 300px;border-radius: 150px;' \
               b'-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
     flash("you are now logged in as %s" % login_session['username'])
-    print("done!")
-    print(login_session)
     return output
 
 # END gconnect() 
 
 
-
 # User details
-def createUser(login_session):
-    newUser = User(user_name=login_session['username'], user_email=login_session['email'],
+def create_user(login_session):
+    newuser = User(user_name=login_session['username'], user_email=login_session['email'],
                    user_picture=login_session['picture'])
-    session.add(newUser)
+    session.add(newuser)
     try:
         session.commit()
-        print("Create User: Session Commit")
+
         user = session.query(User).filter_by(user_email=login_session['email']).one()
         return user.user_id
-    except:
-        print("Create User:Exception occurred in createUser() method")
+    except SQLAlchemyError as _:
         session.rollback()
-        return None
+        return "Database Commit Exception: Create User - Unable to commit changes"
     finally:
         session.close()
-        print("Create User: Session Closed")
 
 
-def getUserInfo(user_id):
-    user = session.query(User).filter_by(user_id=user_id).one()
-    return user
+
+def get_user_info(user_id):
+    try:
+        user = session.query(User).filter_by(user_id=user_id).one()
+        return user
+    except SQLAlchemyError as _:
+        return "Database Select Exception: getUserInfo"
 
 
-def getUserID(email):
+def get_user_id(email):
     try:
         user = session.query(User).filter_by(user_email=email).one()
         return user.user_id
-    except:
-        return None
+    except SQLAlchemyError as _:
+        return "Database Select Exception: getUserID"
 # User Details END
 
 
@@ -197,9 +195,9 @@ def gdisconnect():
         access_token = login_session.get('access_token')
     except KeyError:
         flash('Failed to get access token')
-        return redirect(url_for('showCategories'))
+        return redirect(url_for('show_categories'))
     if access_token is None:
-        print('Access Token is None')
+
         response = make_response(json.dumps('Current user not connected.'), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -221,7 +219,7 @@ def gdisconnect():
         del login_session['picture']
         response = make_response(json.dumps('Successfully disconnected.'), 200)
         response.headers['Content-Type'] = 'application/json'
-        print('gdisconnect - ok')
+
         flash('Google Sign Out - Successfull!!')
  
         return response
@@ -231,8 +229,7 @@ def gdisconnect():
 
 
 # Check login status
-def loginStatus():
-    print(login_session.get('access_token'), login_session.get('email'))
+def loginstatus():
     if 'access_token' in login_session:
         login_status = True
     else:
@@ -245,15 +242,12 @@ def loginStatus():
 @app.route('/home/', methods=['GET', 'POST'])
 def home():
     categories = (session.query(Category).order_by(Category.category_name).all())
-    recentItemsAdded = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
-    login_status = loginStatus()
+    recentitems = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
+    login_status = loginstatus()
     if login_status is True:
-        return render_template('categories.html', categories=categories, recentItemsAdded=recentItemsAdded)
+        return render_template('categories.html', categories=categories, recentItemsAdded=recentitems)
     else:
-        return render_template('home.html', categories=categories, recentItemsAdded=recentItemsAdded)
-    
-    if request.method == 'POST':
-        return redirect(url_for('login'))
+        return render_template('home.html', categories=categories, recentItemsAdded=recentitems)
     
 
 # **** START CATEGORY ****
@@ -261,51 +255,50 @@ def home():
 
 # Show all categories
 @app.route('/category/')
-def showCategories():
-    login_status = loginStatus()
+def show_categories():
+    login_status = loginstatus()
     if login_status is True:
         categories = (session.query(Category).order_by(Category.category_name).all())
-        recentItemsAdded = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
-        return render_template('categories_only.html', categories=categories, recentItemsAdded=recentItemsAdded)
+        recentitems = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
+        return render_template('categories_only.html', categories=categories, recentItemsAdded=recentitems)
     else:
         flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
         return redirect(url_for('home'))
 
 
-
 # Check if the category alredy exists
-def checkCategoryNameExists(category_name_exists):
-    name_exists = None
-    print(category_name_exists)
+def check_category_name(category_name_exists):
     try:
         categoryquery = (session.query(Category).filter_by(category_name=category_name_exists).one())
-        name_exists=True
-    except:
-        name_exists=False
-    
+        if categoryquery.category_name == category_name_exists:
+            name_exists = True
+        else:
+            name_exists = False
+    except SQLAlchemyError as _:
+        return "Database Select Exception: checkCategoryNameExists"
     return name_exists
             
 
 # Create a new category
 @app.route('/category/new/', methods=['GET', 'POST'])
-def newCategory():
-    login_status = loginStatus()
+def new_category():
+    login_status = loginstatus()
     if login_status is True:
         if request.method == 'POST':
-            newCategory = Category(category_name=request.form['name'], user_id=login_session['user_id'])
-            print(newCategory)
-            if checkCategoryNameExists(newCategory.category_name) is True:
-                flash('DUPPLICATE CATEGORY!!: " %s " ...category name already exists' % newCategory.category_name)
-                return redirect(url_for('showCategories'))
+            addcategory = Category(category_name=request.form['name'], user_id=login_session['user_id'])
+            if check_category_name(addcategory.category_name) is True:
+                flash('DUPPLICATE CATEGORY!!: " %s " ...category name already exists' % addcategory.category_name)
+                return redirect(url_for('show_categories'))
             else:
-                print("Inside ELSE")
-                session.add(newCategory)
+              
+                session.add(addcategory)
                 try:
                     session.commit()
-                    flash('CREATE SUCCESS!!: " %s " ...new category added' % newCategory.category_name)
-                    return redirect(url_for('showCategories'))
-                except:
-                    print("Create New Category: Exception during commit")
+                    flash('CREATE SUCCESS!!: " %s " ...new category added' % addcategory.category_name)
+                    return redirect(url_for('show_categories'))
+                except SQLAlchemyError as _:
+                    return "Database Commit Exception: newCategory"
+
                 finally:
                     session.close()
         else:
@@ -317,31 +310,30 @@ def newCategory():
 
 # Edit a category
 @app.route('/category/<int:category_id>/edit/', methods=['GET', 'POST'])
-def editCategory(category_id):
-    login_status = loginStatus()
+def edit_category(category_id):
+    login_status = loginstatus()
     if login_status is True:
-        editQuery = session.query(Category).filter_by(category_id=category_id).one()
-        if editQuery.user_id != login_session['user_id']:
-            flash('EDIT NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % editQuery.category_name)
-            return redirect(url_for('showCategories'))
+        edit_query = session.query(Category).filter_by(category_id=category_id).one()
+        if edit_query.user_id != login_session['user_id']:
+            flash('EDIT NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % edit_query.category_name)
+            return redirect(url_for('show_categories'))
 
         if request.method == 'POST':
             
             if request.form['name']:
-                editQuery.category_name = request.form['name']
-                session.add(editQuery)
+                edit_query.category_name = request.form['name']
+                session.add(edit_query)
                 try:
                     session.commit()
-                    flash('EDIT SUCCESS!!: " %s " ...category modified' % editQuery.category_name)
-                    return redirect(url_for('showCategories'))
-                except:
+                    flash('EDIT SUCCESS!!: " %s " ...category modified' % edit_query.category_name)
+                    return redirect(url_for('show_categories'))
+                except SQLAlchemyError as _:
                     flash('EDIT EXCEPTION OCCURRED!! Unable to edit. Something went wrong when saving the changes...')
-                    return redirect(url_for('showCategories'))
-                    
+                    return redirect(url_for('show_categories'))
                 finally:
                     session.close() 
         else:
-            return render_template('editcategory.html', category=editQuery)
+            return render_template('editcategory.html', category=edit_query)
     else:
         flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
         return redirect(url_for('home'))
@@ -349,29 +341,29 @@ def editCategory(category_id):
 
 # Delete a category
 @app.route('/category/<int:category_id>/delete/', methods=['GET', 'POST'])
-def deleteCategory(category_id):
-    login_status = loginStatus()
+def delete_category(category_id):
+    login_status = loginstatus()
     if login_status is True:
-        deleteQuery = session.query(Category).filter_by(category_id=category_id).one()
+        delete_query = session.query(Category).filter_by(category_id=category_id).one()
         items = session.query(Item).filter_by(category_id=category_id).all()
-        if deleteQuery.user_id != login_session['user_id']:
-                flash('DELETE NOT ALLOWED!!: " %s " ...creator alone has permission to delete' % deleteQuery.category_name)
-                return redirect(url_for('showCategories'))
+        if delete_query.user_id != login_session['user_id']:
+                flash('DELETE NOT ALLOWED!!: " %s " ...creator alone has permission to delete'
+                      % delete_query.category_name)
+                return redirect(url_for('show_categories'))
 
         if request.method == 'POST':
-            session.delete(deleteQuery)
+            session.delete(delete_query)
             try:
                 session.commit()
-                flash('DELETE SUCCESS!!: " %s " ...category deleted' % deleteQuery.category_name)
-                return redirect(url_for('showCategories'))
-            except:
+                flash('DELETE SUCCESS!!: " %s " ...category deleted' % delete_query.category_name)
+                return redirect(url_for('show_categories'))
+            except SQLAlchemyError as _:
                 flash('DELETE EXCEPTION OCCURRED!!: Delete Failed. Something went wrong when deleting category')
-                return redirect(url_for('showCategories'))
-                
+                return redirect(url_for('show_categories'))
             finally:
                 session.close() 
         else:
-            return render_template('deletecategory.html', category=deleteQuery, items=items)
+            return render_template('deletecategory.html', category=delete_query, items=items)
     else:
         flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
         return redirect(url_for('home'))
@@ -382,7 +374,7 @@ def deleteCategory(category_id):
 # **** START ITEMS ****
 # Show all items
 @app.route('/items/')
-def showAllItems():
+def show_all_items():
     
         items = session.query(Item).order_by(asc(Item.item_name))
         return render_template('items.html', items=items)
@@ -390,7 +382,7 @@ def showAllItems():
 
 # Show all items in Category
 @app.route('/category/<int:category_id>/items/')
-def showCategoryItems(category_id):
+def show_category_items(category_id):
     category = session.query(Category).filter_by(category_id=category_id).one()
     items = session.query(Item).filter_by(category_id=category_id).all()
     return render_template('categoryitems.html', items=items, category=category)
@@ -398,22 +390,22 @@ def showCategoryItems(category_id):
 
 # Add new item for a Category
 @app.route('/category/<int:category_id>/new', methods=['GET', 'POST'])
-def addNewItemForCategory(category_id):
-    login_status = loginStatus()
+def add_new_item_for_category(category_id):
+    login_status = loginstatus()
     if login_status is True:
         category = session.query(Category).filter_by(category_id=category_id).one()
         
         if request.method == 'POST':
-            newItem = Item(item_name=request.form['name'], item_description=request.form['description'],
-            category_id=category_id, user_id=login_session['user_id'])
-            session.add(newItem)
+            new_item = Item(item_name=request.form['name'], item_description=request.form['description'],
+                            category_id=category_id, user_id=login_session['user_id'])
+            session.add(new_item)
             try:
                 session.commit()
-                flash('CREATE SUCCESS!!: " %s " ...new item added to category' % newItem.item_name)
-                return redirect(url_for('showCategoryItems', category_id=category.category_id))
-            except:
+                flash('CREATE SUCCESS!!: " %s " ...new item added to category' % new_item.item_name)
+                return redirect(url_for('show_category_items', category_id=category.category_id))
+            except SQLAlchemyError as _:
                 flash('CREATE EXCEPTION OCCURRED!!: Failed to add new item. Something went wrong when adding new item.')
-                return redirect(url_for('showCategoryItems', category_id=category.category_id))
+                return redirect(url_for('show_category_items', category_id=category.category_id))
             finally:
                 session.close()
         else:
@@ -426,32 +418,32 @@ def addNewItemForCategory(category_id):
 # Edit item in a Category
 # @app.route('/items/edit')
 @app.route('/category/<int:category_id>/items/<int:item_id>/edit', methods=['GET', 'POST'])
-def editItemInCategory(category_id, item_id):
-    login_status = loginStatus()
+def edit_item_in_category(category_id, item_id):
+    login_status = loginstatus()
     if login_status is True:
-        editItem = session.query(Item).filter_by(item_id=item_id).one()
+        edit_item = session.query(Item).filter_by(item_id=item_id).one()
         category = session.query(Category).filter_by(category_id=category_id).one()
         
-        if editItem.user_id != login_session['user_id']:
-            flash('EDIT NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % editItem.item_name)
-            return redirect(url_for('showCategoryItems', category_id=category.category_id))
+        if edit_item.user_id != login_session['user_id']:
+            flash('EDIT NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % edit_item.item_name)
+            return redirect(url_for('show_category_items', category_id=category.category_id))
 
         if request.method == 'POST':
             if request.form['name']:
-                editItem.item_name = request.form['name']
-                editItem.item_description = request.form['description']
-                session.add(editItem)
+                edit_item.item_name = request.form['name']
+                edit_item.item_description = request.form['description']
+                session.add(edit_item)
                 try:
                     session.commit()
-                    flash('EDIT SUCCESS!!: " %s " ...item name modified' % editItem.item_name)
-                    return redirect(url_for('showCategoryItems', category_id=category.category_id))
-                except:
+                    flash('EDIT SUCCESS!!: " %s " ...item name modified' % edit_item.item_name)
+                    return redirect(url_for('show_category_items', category_id=category.category_id))
+                except SQLAlchemyError as _:
                     flash('EDIT EXCEPTION OCCURRED!!: Edit Failed. Something went wrong when saving changes')
-                    return redirect(url_for('showCategoryItems', category_id=category.category_id))
+                    return redirect(url_for('show_category_items', category_id=category.category_id))
                 finally:
                     session.close()
         else:
-            return render_template('edititem.html', item=editItem, category=category)
+            return render_template('edititem.html', item=edit_item, category=category)
     else:
         flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
         return redirect(url_for('home'))
@@ -459,30 +451,30 @@ def editItemInCategory(category_id, item_id):
 
 # Delete item in a Category
 @app.route('/category/<int:category_id>/items/<int:item_id>/delete', methods=['GET', 'POST'])
-def deleteItemInCategory(category_id, item_id):
-    login_status = loginStatus()
+def delete_item_in_category(category_id, item_id):
+    login_status = loginstatus()
     if login_status is True:
-        deleteItem = session.query(Item).filter_by(item_id=item_id).one()
+        delete_item = session.query(Item).filter_by(item_id=item_id).one()
         category = session.query(Category).filter_by(category_id=category_id).one()
         
-        if deleteItem.user_id != login_session['user_id']:
-            flash('DELETE NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % deleteItem.item_name)
-            return redirect(url_for('showCategoryItems', category_id=category.category_id))
+        if delete_item.user_id != login_session['user_id']:
+            flash('DELETE NOT ALLOWED!!: " %s " ...creator alone has permission to edit' % delete_item.item_name)
+            return redirect(url_for('show_category_items', category_id=category.category_id))
 
         if request.method == 'POST':
             
-            session.delete(deleteItem)
+            session.delete(delete_item)
             try:
                 session.commit()
-                flash('DELETE SUCCESS!!: " %s " ...item name deleted' % deleteItem.item_name)
-                return redirect(url_for('showCategoryItems', category_id=category.category_id))
-            except:
+                flash('DELETE SUCCESS!!: " %s " ...item name deleted' % delete_item.item_name)
+                return redirect(url_for('show_category_items', category_id=category.category_id))
+            except SQLAlchemyError as _:
                 flash('DELETE EXCEPTION OCCURRED!!: Delete Failed. Something went wrong when deleting item')
-                return redirect(url_for('showCategoryItems', category_id=category.category_id))
+                return redirect(url_for('show_category_items', category_id=category.category_id))
             finally:
                 session.close()
         else:
-            return render_template('deleteitem.html', item=deleteItem, category=category)
+            return render_template('deleteitem.html', item=delete_item, category=category)
     else:
         flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
         return redirect(url_for('home'))
@@ -495,27 +487,42 @@ def deleteItemInCategory(category_id, item_id):
 
 # Show all categories
 @app.route('/categories/JSON')
-def showCategoriesJSON():
-    categories = (session.query(Category).order_by(Category.category_name).all())
-    return jsonify(Categories=[c.serialize for c in categories])
+def show_categories_json():
+    try:
+        categories = (session.query(Category).order_by(Category.category_name).all())
+        return jsonify(Categories=[c.serialize for c in categories])
+    except SQLAlchemyError as _:
+        return "JSON EXCEPTION: showCategoriesJSON "
+
 
 # Show details of a specific category
 @app.route('/categorydetails/<int:category_id>/JSON')
-def categoryDetailsJSON(category_id):
-    category = session.query(Category).filter_by(category_id=category_id).one()
-    return jsonify(CategoryDetails=category.serialize)
+def category_details_json(category_id):
+    try:
+        category = session.query(Category).filter_by(category_id=category_id).one()
+        return jsonify(CategoryDetails=category.serialize)
+    except SQLAlchemyError as _:
+        return "JSON EXCEPTION: categoryDetailsJSON "
 
 
 @app.route('/recentitems/JSON')
-def showrecentItems():
-    recentItemsAdded = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
-    return jsonify(RecentItems=[c.serialize for c in recentItemsAdded])
+def show_recent_items_json():
+    try:
+        recent_items_added\
+            = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
+        return jsonify(RecentItems=[c.serialize for c in recent_items_added])
+    except SQLAlchemyError as _:
+        return "JSON EXCEPTION: showrecentItems "
+
 
 # Show all items in Category
 @app.route('/category/<int:category_id>/items/JSON')
-def showItemsInCategory(category_id):
-    items = session.query(Item).filter_by(category_id=category_id).all()
-    return jsonify(CategoryItems=[i.serialize for i in items])
+def show_items_in_category_json(category_id):
+    try:
+        items = session.query(Item).filter_by(category_id=category_id).all()
+        return jsonify(CategoryItems=[i.serialize for i in items])
+    except SQLAlchemyError as _:
+        return "JSON EXCEPTION: showItemsInCategory "
 
 # END API End Points
 
@@ -524,4 +531,3 @@ if __name__ == '__main__':
     app.secret_key = 'super_secret_key'
     app.debug = True
     app.run(host='0.0.0.0', port=8000)
-    

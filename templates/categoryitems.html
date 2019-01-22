@@ -29,8 +29,8 @@
                             <td> {{i.item_description}} </td>
                             <td> {{i.category_id}} </td>
                             <td> {{i.user_id}} </td>
-                            <td> <a href='{{url_for('editItemInCategory',category_id=category.category_id, item_id=i.item_id)}}' >Edit Item</a> </td>
-                            <td> <a href='{{url_for('deleteItemInCategory',category_id=category.category_id, item_id=i.item_id)}}' >Delete Item</a> </td>
+                            <td> <a href='{{url_for('edit_item_in_category',category_id=category.category_id, item_id=i.item_id)}}' >Edit Item</a> </td>
+                            <td> <a href='{{url_for('delete_item_in_category',category_id=category.category_id, item_id=i.item_id)}}' >Delete Item</a> </td>
                         </tr>
                         {% endfor %}
 
@@ -38,7 +38,7 @@
 	
                 </div>	
                 <p>
-                        <a href = '{{url_for('addNewItemForCategory', category_id = category.category_id) }}'>Add New Item</a>
+                        <a href = '{{url_for('add_new_item_for_category', category_id = category.category_id) }}'>Add New Item</a>
                 </p>
 			</div>
 {% endblock %}

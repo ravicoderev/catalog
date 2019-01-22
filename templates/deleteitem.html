@@ -15,7 +15,7 @@
             </div>
             <div class="row">
                 <div class="col-md-6 col-md-offset-1 padding-top">
-                    <form action="{{ url_for('deleteItemInCategory',category_id=category.category_id, item_id=item.item_id)}}" method = "post">
+                    <form action="{{ url_for('delete_item_in_category',category_id=category.category_id, item_id=item.item_id)}}" method = "post">
                                    <p>
                                             <div >
                                                     <p>
@@ -33,7 +33,7 @@
                                     <br><br>
 
                                     <input type="submit" style="width:100px; height:50px;" value="Delete" >    
-                                    <input type="button" style="width:100px; height:50px;" value="Cancel" onclick="location.href = '{{url_for('showCategoryItems', category_id=category.category_id, item_id=item.item_id)}}'">
+                                    <input type="button" style="width:100px; height:50px;" value="Cancel" onclick="location.href = '{{url_for('show_category_items', category_id=category.category_id, item_id=item.item_id)}}'">
                     </form>
                 </div>
             </div>

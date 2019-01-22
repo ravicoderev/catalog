@@ -37,9 +37,9 @@
                         </table>
 
                 <div class="col-md-6 col-md-offset-1 padding-top">
-                    <form action="{{ url_for('deleteCategory',category_id = category.category_id)}}" method = "post">
+                    <form action="{{ url_for('delete_category',category_id = category.category_id)}}" method = "post">
                             <input type="submit" style="width:100px; height:50px;" value="Delete" >    
-                            <input type="button" style="width:100px; height:50px;" value="Cancel" onclick="location.href = '{{url_for('showCategories')}}'">
+                            <input type="button" style="width:100px; height:50px;" value="Cancel" onclick="location.href = '{{url_for('show_categories')}}'">
                     </form>
                 </div>
             </div>

@@ -24,7 +24,7 @@
 								<tr>
 									<td> {{c.category_id}} </td>
                                     <td> {{c.category_name}} </td>
-                                    <td> <a href='{{url_for('showCategoryItems',category_id=c.category_id)}}' >View Items </a></td>
+                                    <td> <a href='{{url_for('show_category_items',category_id=c.category_id)}}' >View Items </a></td>
 									
 								</tr>
 								{% endfor %}
