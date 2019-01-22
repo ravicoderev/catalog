@@ -394,8 +394,8 @@ def editCategory(category_id):
 def deleteCategory(category_id):
     login_status = loginStatus()
     if login_status is True:
-        deleteQuery = session.query(
-            Category).filter_by(category_id=category_id).one()
+        deleteQuery = session.query(Category).filter_by(category_id=category_id).one()
+        items = session.query(Item).filter_by(category_id=category_id).all()
         if deleteQuery.user_id != login_session['user_id']:
                 flash('DELETE NOT ALLOWED!!: " %s " ...creator alone has permission to delete' % deleteQuery.category_name)
                 return redirect(url_for('showCategories'))
@@ -411,7 +411,7 @@ def deleteCategory(category_id):
             finally:
                 session.close() 
         else:
-            return render_template('deletecategory.html', category=deleteQuery)
+            return render_template('deletecategory.html', category=deleteQuery, items=items)
     else:
         flash('LOGIN!!: Feature requires login. Please log in. You are redirected to the home page...')
         return redirect(url_for('home'))
