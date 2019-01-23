@@ -524,6 +524,15 @@ def show_items_in_category_json(category_id):
     except SQLAlchemyError as _:
         return "JSON EXCEPTION: showItemsInCategory "
 
+# Show details of specific item in a Category
+@app.route('/items/<int:item_id>/JSON')
+def show_item_details_json(item_id):
+    try:
+        item = session.query(Item).filter_by(item_id=item_id).one()
+        return jsonify(ItemDetails=item.serialize)
+    except SQLAlchemyError as _:
+        return "JSON EXCEPTION: showItemsInCategory "
+
 # END API End Points
 
 

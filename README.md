@@ -98,9 +98,10 @@ Change directory to the /vagrant directory by typing ```cd /vagrant```. This wil
       - View only of all items across all categories.
 4. JSON:
       - List all categories: [http://localhost:8000/categories/JSON]
-      - Details of a particular category: [http://localhost:8000/categorydetails/1/JSON]
+      - Details of a particular category: [http://localhost:8000/categorydetails/<category_id>/JSON]
       - Recent items added: [http://localhost:8000/recentitems/JSON]
-      - List of items in specific category: [http://localhost:8000/category/1/items/JSON]
+      - List of items in specific category: [http://localhost:8000/category/<category_id>/items/JSON]
+      - Details of a particular item: [http://localhost:8000/items/<item_id>/JSON]
 5. Logout (/gdisconnect):
       - Log out of application. 
       NOTE: This does not sign-out of Google. To sign-out of Google navigate to link in the browser (Ex. On CHROME the far top right will show a picture of the signed-in user.)
