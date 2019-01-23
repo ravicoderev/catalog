@@ -77,3 +77,31 @@ Change directory to the /vagrant directory by typing ```cd /vagrant```. This wil
 3. Click the '''Login''' button to sign-in to Google.
 4. Google sing-in is required for all create, read, update and delete operations. You are allowd to only view without successful sing-in.
 
+**7. Application Features & Navigation:**
+1. Login (/login):
+      - Launches Google Sign-In to enable authentication.
+      - Redirects users to /home if the user has signed-in.
+      - Creates a new user in the database for all new user sign-in if the user email id does not exist in the database.
+      - The users created in the database is used to validate/constrain inadvertent Edit/Delete of Category/Items created by other users.
+2. Home (/home): 
+      - Default view lists all Categories and Recent Items added across all categories.
+      - When user is signed-in the Categories list will have options to Edit/Delete/View. Recent Items is *View* only in both Signed-In and Sign-Out states. 
+2. Sport Categories (/category):
+      - When user is signed-in all the categories with Edit/Delete/View options is displayed.
+      - Adde new category using the link *Add New Category* below the category listing
+      - Validation to ensure Edit/Deletes are enabled for owners/creators of the category. 
+      - Error message is displayed on top of the screen when non owners/creators try to Edit/Delete.
+      - Duplicate category name check is enabled when creation of new category.
+      - Delete operation on a category by the owner will also delete all items under that category.
+      - Navigate into View option enables Add/Edit/Delete of items for the category.
+3. Items (/items):
+      - View only of all items across all categories.
+4. JSON:
+      - List all categories: [http://localhost:8000/categories/JSON]
+      - Details of a particular category: [http://localhost:8000/categorydetails/1/JSON]
+      - Recent items added: [http://localhost:8000/recentitems/JSON]
+      - List of items in specific category: [http://localhost:8000/category/1/items/JSON]
+5. Logout (/gdisconnect):
+      - Log out of application. 
+      NOTE: This does not sign-out of Google. To sign-out of Google navigate to link in the browser (Ex. On CHROME the far top right will show a picture of the signed-in user.)
+
