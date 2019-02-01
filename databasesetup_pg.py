@@ -26,6 +26,12 @@ class Users(Base):
             'user_email': self.user_email            
         }
 
+    def __init__(self, user_id, user_name, user_email, user_picture):
+        self.user_id = user_id
+        self.user_name = user_name
+        self.user_email = user_email
+        self.user_picture = user_picture
+
 
 class Category(Base):
     __tablename__ = 'category'
@@ -45,8 +51,14 @@ class Category(Base):
         }
 
 
-class Item(Base):
-    __tablename__ = 'item'
+    def __init__(self, category_id, category_name, user_id):
+        self.category_id = category_id
+        self.category_name = category_name
+        self.user_id = user_id
+
+
+class Items(Base):
+    __tablename__ = 'items'
 
     item_id = Column(Integer, primary_key=True)
     item_name = Column(String(80), nullable=False)
@@ -64,6 +76,14 @@ class Item(Base):
             'item_name': self.item_name,
             'item_description': self.item_description            
         }
+
+
+    def __init__(self, item_id, item_name, item_description, category_id, user_id):
+        self.item_id = item_id
+        self.item_name = item_name
+        self.item_description = item_description
+        self.category_id = category_id
+        self.user_id = user_id
 
 
 # engine = create_engine('sqlite:///sportscatalogitems.db', connect_args={'check_same_thread': False})

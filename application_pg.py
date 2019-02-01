@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, asc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 # from databasesetup import Category, Item, User
-from databasesetup_pg import Users, Category, Item
+from databasesetup_pg import Users, Category, Items
 
 # Authentication modules for google OAuth
 from oauth2client.client import flow_from_clientsecrets, FlowExchangeError
@@ -62,7 +62,7 @@ HOST="localhost"
 PORT="5432"
 
 # engine = create_engine('postgresql+psycopg2://USER:PASSWORD@HOST/DBNAME')
-engine = create_engine("postgresql://sportscatalogitems:1234@localhost:5432/sportscatalogitems",client_encoding='utf8')
+engine = create_engine("postgresql://sportscatalogitems:1234@localhost:5432/sportscatalogitems")
 base = declarative_base()
 
 DBSession = sessionmaker(bind=engine)
@@ -70,7 +70,7 @@ session = DBSession()
 
 base.metadata.create_all(engine)
 
-# **************************************
+# # **************************************
 # def users():
 #     print("Inside Users ... OK")
 #     users_count = session.query(Users).count()
@@ -83,16 +83,22 @@ base.metadata.create_all(engine)
 #     users = session.query(Users).order_by(Users.user_id).all()
 #     print(users)
 #     for user in users:
-#         print(users)
+#         print("Users Are :", {user.user_id}, {user.user_name})
 
-# # def show_categories():
-# #     categories = (session.query(Category).order_by(Category.category_name).all())
-# #     print(categories)
+# def show_categories():
+#     recentitems_count = (session.query(Items).order_by(Items.item_id.desc()).count())
+#     print("Count of items is --- : ",recentitems_count)
+
+#     categories = (session.query(Category).order_by(Category.category_name).all())
+#     for category in categories:
+#         print({category.category_id},  {category.category_name})
+    
+#     recentitems = (session.query(Items).order_by(Items.item_id.desc()).limit(10))
 
 # users()
-# # show_categories()
+# show_categories()
 
-# **************************************
+# # **************************************
 
 # **** OAuth **** Create anti-forgery state token
 @app.route('/login')
@@ -283,8 +289,17 @@ def loginstatus():
 @app.route('/')
 @app.route('/home/', methods=['GET', 'POST'])
 def home():
+    recentitems_count = (session.query(Items).order_by(Items.item_id.desc()).count())
+    print("Count of items is --- : ",recentitems_count)
+
     categories = (session.query(Category).order_by(Category.category_name).all())
-    recentitems = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
+    for category in categories:
+        print({category.category_id},  {category.category_name})
+    
+    recentitems = (session.query(Items).order_by(Items.item_id.desc()).limit(10))
+    
+    for items in recentitems:
+        print("Recent Ites Added is : ",{items.item_id}, {items.item_name})
     
     login_status = loginstatus()
     if login_status is True:
@@ -303,7 +318,7 @@ def show_categories():
     if login_status is True:
         categories = (session.query(Category).order_by(Category.category_name).all())
         print(categories)
-        recentitems = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
+        recentitems = (session.query(Items).order_by(Items.item_id.desc()).limit(10))
         print(recentitems)
         return render_template('categories_only.html', categories=categories, recentItemsAdded=recentitems)
         
@@ -391,7 +406,7 @@ def delete_category(category_id):
     login_status = loginstatus()
     if login_status is True:
         delete_query = session.query(Category).filter_by(category_id=category_id).one()
-        items = session.query(Item).filter_by(category_id=category_id).all()
+        items = session.query(Items).filter_by(category_id=category_id).all()
         if delete_query.user_id != login_session['user_id']:
                 flash('DELETE NOT ALLOWED!!: " %s " ...creator alone has permission to delete'
                       % delete_query.category_name)
@@ -422,7 +437,7 @@ def delete_category(category_id):
 @app.route('/items/')
 def show_all_items():
     
-        items = session.query(Item).order_by(asc(Item.item_name))
+        items = session.query(Items).order_by(asc(Items.item_name))
         print(items)
         return render_template('items.html', items=items)
 
@@ -431,7 +446,7 @@ def show_all_items():
 @app.route('/category/<int:category_id>/items/')
 def show_category_items(category_id):
     category = session.query(Category).filter_by(category_id=category_id).one()
-    items = session.query(Item).filter_by(category_id=category_id).all()
+    items = session.query(Items).filter_by(category_id=category_id).all()
     return render_template('categoryitems.html', items=items, category=category)
 
 
@@ -468,7 +483,7 @@ def add_new_item_for_category(category_id):
 def edit_item_in_category(category_id, item_id):
     login_status = loginstatus()
     if login_status is True:
-        edit_item = session.query(Item).filter_by(item_id=item_id).one()
+        edit_item = session.query(Items).filter_by(item_id=item_id).one()
         category = session.query(Category).filter_by(category_id=category_id).one()
         
         if edit_item.user_id != login_session['user_id']:
@@ -501,7 +516,7 @@ def edit_item_in_category(category_id, item_id):
 def delete_item_in_category(category_id, item_id):
     login_status = loginstatus()
     if login_status is True:
-        delete_item = session.query(Item).filter_by(item_id=item_id).one()
+        delete_item = session.query(Items).filter_by(item_id=item_id).one()
         category = session.query(Category).filter_by(category_id=category_id).one()
         
         if delete_item.user_id != login_session['user_id']:
@@ -556,7 +571,7 @@ def category_details_json(category_id):
 def show_recent_items_json():
     try:
         recent_items_added\
-            = (session.query(Item).order_by(Item.item_id.desc()).limit(10))
+            = (session.query(Items).order_by(Items.item_id.desc()).limit(10))
         return jsonify(RecentItems=[c.serialize for c in recent_items_added])
     except SQLAlchemyError as _:
         return "JSON EXCEPTION: showrecentItems "
@@ -566,7 +581,7 @@ def show_recent_items_json():
 @app.route('/category/<int:category_id>/items/JSON')
 def show_items_in_category_json(category_id):
     try:
-        items = session.query(Item).filter_by(category_id=category_id).all()
+        items = session.query(Items).filter_by(category_id=category_id).all()
         return jsonify(CategoryItems=[i.serialize for i in items])
     except SQLAlchemyError as _:
         return "JSON EXCEPTION: showItemsInCategory "
@@ -575,7 +590,7 @@ def show_items_in_category_json(category_id):
 @app.route('/items/<int:item_id>/JSON')
 def show_item_details_json(item_id):
     try:
-        item = session.query(Item).filter_by(item_id=item_id).one()
+        item = session.query(Items).filter_by(item_id=item_id).one()
         return jsonify(ItemDetails=item.serialize)
     except SQLAlchemyError as _:
         return "JSON EXCEPTION: showItemsInCategory "
